@@ -1,0 +1,36 @@
+spring:
+  application:
+    name: tarikma-backend
+  datasource:
+    url: jdbc:postgresql://db.prisma.io:5432/postgres?sslmode=require
+    username: bab4864f04ba05dcc3d01821328a6ddabeac29acd236c6b84286b6d672240c4b
+    password: sk_3A6ZP9HaW_cEhreLtLHbY
+  flyway:
+    enabled: true
+    url: jdbc:postgresql://db.prisma.io:5432/postgres?sslmode=require
+    user: bab4864f04ba05dcc3d01821328a6ddabeac29acd236c6b84286b6d672240c4b
+    password: sk_3A6ZP9HaW_cEhreLtLHbY
+    locations: classpath:db/migration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+    open-in-view: false
+
+server:
+  port: 8080
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui
+
+app:
+  security:
+    jwt:
+      secret: "V6ztxIHtw8NSDNE1ZEKCENzZ083/6fDgr96qJTLNA+aevYsieS08CNf+DCWqLy3l"
+      issuer: "tarikma"
+      expiration-minutes: 60
