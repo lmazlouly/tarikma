@@ -16,7 +16,7 @@ public class OpenApiConfig {
                         .title("Tarikma API")
                         .version("v1")
                         .description("Backend API for Tarik.ma")
-                        .license(new License().name("MIT"))
+                        .license(new License().name("MIT").url("https://opensource.org/licenses/MIT"))
                 );
     }
 }
