@@ -6,10 +6,27 @@
  * OpenAPI spec version: v1
  */
 
+export type RegistrationUserType = 'TOURIST' | 'COMPANY' | 'GUIDE';
+
 export interface RegisterRequest {
+  userType: RegistrationUserType;
+  /**
+   * @minLength 0
+   * @maxLength 150
+   */
+  fullName: string;
   /** @minLength 1 */
-  username: string;
-  /** @minLength 1 */
+  email: string;
+  /**
+   * @minLength 6
+   * @maxLength 2147483647
+   */
   password: string;
-  role?: string;
+  phone?: string;
+  /** Required when userType is COMPANY */
+  companyName?: string;
+  companyDescription?: string;
+  /** Used when userType is GUIDE */
+  bio?: string;
+  languages?: string;
 }

@@ -3,6 +3,7 @@ package com.tarikma.app.controllers;
 import com.tarikma.app.dto.auth.AuthResponse;
 import com.tarikma.app.dto.auth.LoginRequest;
 import com.tarikma.app.dto.auth.RegisterRequest;
+import com.tarikma.app.entity.Role;
 import com.tarikma.app.entity.User;
 import com.tarikma.app.service.JwtService;
 import com.tarikma.app.service.UserService;
@@ -12,6 +13,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -27,22 +30,25 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Valid @RequestBody RegisterRequest request) {
-        User user = userService.register(request.getUsername(), request.getPassword(), request.getRole());
+        User user = userService.register(request);
 
         String token = jwtService.generateToken(user);
-        return ResponseEntity.ok(new AuthResponse(token));
+        return ResponseEntity.ok(buildAuthResponse(user, token));
     }
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        try {
-            User user = userService.authenticate(request.getUsername(), request.getPassword());
-    
-            String token = jwtService.generateToken(user);
-            return ResponseEntity.ok(new AuthResponse(token));
-        } catch (Exception e) {
-            e.printStackTrace();
-            return ResponseEntity.badRequest().build();
-        }
+        User user = userService.authenticate(request.getEmail(), request.getPassword());
+
+        String token = jwtService.generateToken(user);
+        return ResponseEntity.ok(buildAuthResponse(user, token));
+    }
+
+    private AuthResponse buildAuthResponse(User user, String token) {
+        List<String> roleNames = user.getRoles().stream()
+                .map(Role::getName)
+                .sorted()
+                .toList();
+        return new AuthResponse(token, user.getEmail(), user.getFullName(), roleNames);
     }
 }

@@ -2,8 +2,9 @@ import { createContext, useContext, useMemo, useState, type ReactNode } from 're
 
 type JwtPayload = {
   exp?: number
-  role?: string
-  username?: string
+  roles?: string[]
+  email?: string
+  fullName?: string
   sub?: string
 }
 
@@ -27,8 +28,9 @@ function decodeJwtPayload(token: string): JwtPayload | null {
 
 export type AuthContextValue = {
   token: string | null
-  role: string | null
-  username: string | null
+  roles: string[]
+  email: string | null
+  fullName: string | null
   isAuthenticated: boolean
   setToken: (token: string | null) => void
   logout: () => void
@@ -46,8 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isExpired = expMs ? Date.now() >= expMs : false
 
   const effectiveToken = token && !isExpired ? token : null
-  const role = effectiveToken ? payload?.role?.toUpperCase?.() ?? null : null
-  const username = effectiveToken ? payload?.username ?? payload?.sub ?? null : null
+  const roles: string[] = effectiveToken
+    ? (payload?.roles ?? []).map((r) => r.toUpperCase())
+    : []
+  const email = effectiveToken ? payload?.email ?? payload?.sub ?? null : null
+  const fullName = effectiveToken ? payload?.fullName ?? null : null
 
   const setToken = (next: string | null) => {
     if (next) {
@@ -64,14 +69,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const hasRole = (wanted: string) => {
     const normalizedWanted = wanted.trim().toUpperCase()
     if (!effectiveToken) return false
-    if (!role) return false
-    return role === normalizedWanted
+    return roles.includes(normalizedWanted)
   }
 
   const value: AuthContextValue = {
     token: effectiveToken,
-    role,
-    username,
+    roles,
+    email,
+    fullName,
     isAuthenticated: Boolean(effectiveToken),
     setToken,
     logout,

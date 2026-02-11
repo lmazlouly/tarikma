@@ -1,6 +1,7 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from '../layouts/RootLayout'
 import { ProtectedRoute } from './ProtectedRoute'
+import { GuestRoute } from './GuestRoute'
 import { DashboardPage } from '../../pages/dashboard/DashboardPage'
 import { AdminPage } from '../../pages/admin/AdminPage'
 
@@ -20,14 +21,28 @@ const router = createBrowserRouter([
         path: 'login',
         lazy: async () => {
           const m = await import('../../pages/auth/LoginPage')
-          return { Component: m.LoginPage }
+          const Page = m.LoginPage
+          return {
+            Component: () => (
+              <GuestRoute>
+                <Page />
+              </GuestRoute>
+            ),
+          }
         },
       },
       {
         path: 'register',
         lazy: async () => {
           const m = await import('../../pages/auth/RegisterPage')
-          return { Component: m.RegisterPage }
+          const Page = m.RegisterPage
+          return {
+            Component: () => (
+              <GuestRoute>
+                <Page />
+              </GuestRoute>
+            ),
+          }
         },
       },
       {
