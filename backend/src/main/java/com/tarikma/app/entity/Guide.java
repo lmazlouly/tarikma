@@ -18,7 +18,7 @@ public class Guide {
     @Column(name = "user_id")
     private Long userId;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne(fetch = FetchType.EAGER)
     @MapsId
     @JoinColumn(name = "user_id")
     private User user;
@@ -26,7 +26,7 @@ public class Guide {
     @Column(name = "guide_type", nullable = false, length = 20)
     private String guideType;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "company_id")
     private Company company;
 

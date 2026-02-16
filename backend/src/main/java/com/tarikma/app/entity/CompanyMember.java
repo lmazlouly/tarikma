@@ -15,19 +15,19 @@ import jakarta.persistence.Table;
 public class CompanyMember {
 
     @Id
-    @Column(name = "company_id", insertable = false, updatable = false)
+    @Column(name = "company_id")
     private Long companyId;
 
     @Id
-    @Column(name = "user_id", insertable = false, updatable = false)
+    @Column(name = "user_id")
     private Long userId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "company_id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "company_id", insertable = false, updatable = false)
     private Company company;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "user_id", insertable = false, updatable = false)
     private User user;
 
     @Column(name = "member_role", nullable = false, length = 20)
@@ -43,8 +43,16 @@ public class CompanyMember {
         return companyId;
     }
 
+    public void setCompanyId(Long companyId) {
+        this.companyId = companyId;
+    }
+
     public Long getUserId() {
         return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 
     public Company getCompany() {

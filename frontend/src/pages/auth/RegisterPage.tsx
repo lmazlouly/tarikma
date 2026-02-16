@@ -4,9 +4,9 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Icon } from '@iconify/react'
 import { useRegister } from '../../shared/api/auth-controller/auth-controller'
 import { useAuth } from '../../app/auth/AuthContext'
-import type { RegistrationUserType } from '../../shared/api/model/registerRequest'
+import type { RegisterRequestUserType } from '../../shared/api/model/registerRequestUserType'
 
-const USER_TYPE_OPTIONS: { value: RegistrationUserType; label: string; description: string; icon: string }[] = [
+const USER_TYPE_OPTIONS: { value: RegisterRequestUserType; label: string; description: string; icon: string }[] = [
   { value: 'TOURIST', label: 'Tourist', description: 'Browse and book tours and experiences', icon: 'lucide:backpack' },
   { value: 'COMPANY', label: 'Company', description: 'Manage tours and team members', icon: 'lucide:building-2' },
   { value: 'GUIDE', label: 'Individual Guide', description: 'Offer your services independently', icon: 'lucide:compass' },
@@ -16,7 +16,7 @@ const inputClass =
   'h-12 w-full rounded-xl border border-gray-300 bg-white px-3 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-brand-ocean-light focus:ring-2 focus:ring-brand-ocean-light/20'
 
 export function RegisterPage() {
-  const [userType, setUserType] = useState<RegistrationUserType | null>(null)
+  const [userType, setUserType] = useState<RegisterRequestUserType | null>(null)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -66,8 +66,12 @@ export function RegisterPage() {
 
   const errorMessage = useMemo(() => {
     if (!registerMutation.isError) return null
-    return 'Registration failed. The email may already be in use.'
-  }, [registerMutation.isError])
+    const status = (registerMutation.error as any)?.response?.status ?? (registerMutation.error as any)?.status
+
+    if (status === 500) return 'Internal server error. Please try again later.'
+    if (status === 409) return 'Registration failed. The email may already be in use.'
+    return 'Registration failed. Please try again.'
+  }, [registerMutation.isError, registerMutation.error])
 
   return (
     <div className="min-h-[100dvh] bg-white text-gray-900">
@@ -245,7 +249,7 @@ export function RegisterPage() {
                     <motion.button
                       type="button"
                       onClick={() => setShowPassword((v) => !v)}
-                      whileTap={{ scale: 0.98 }}
+                      // whileTap={{ scale: 0.98 }}
                       className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-ocean-light/20"
                       aria-label={showPassword ? 'Hide password' : 'Show password'}
                     >

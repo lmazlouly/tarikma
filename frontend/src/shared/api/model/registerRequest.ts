@@ -5,11 +5,10 @@
  * Backend API for Tarik.ma
  * OpenAPI spec version: v1
  */
-
-export type RegistrationUserType = 'TOURIST' | 'COMPANY' | 'GUIDE';
+import type { RegisterRequestUserType } from './registerRequestUserType';
 
 export interface RegisterRequest {
-  userType: RegistrationUserType;
+  userType: RegisterRequestUserType;
   /**
    * @minLength 0
    * @maxLength 150
@@ -23,10 +22,8 @@ export interface RegisterRequest {
    */
   password: string;
   phone?: string;
-  /** Required when userType is COMPANY */
   companyName?: string;
   companyDescription?: string;
-  /** Used when userType is GUIDE */
   bio?: string;
   languages?: string;
 }

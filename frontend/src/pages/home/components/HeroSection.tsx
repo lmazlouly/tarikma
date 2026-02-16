@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { Icon } from '@iconify/react'
 
 export function HeroSection() {
@@ -44,13 +45,13 @@ export function HeroSection() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, delay: 0.3 }}
         >
-          <a
-            href="#cities"
-            className="inline-flex items-center gap-2 rounded-full bg-brand-gold px-8 py-3.5 text-base font-semibold text-brand-dark shadow-lg shadow-brand-gold/25 transition hover:bg-brand-gold-hover hover:shadow-brand-gold/40"
+          <Link
+            to="/plan"
+            className="inline-flex items-center gap-2 rounded-full bg-brand-gold px-8 py-3.5 text-base font-semibold text-brand-dark shadow-lg shadow-brand-gold/25 transition hover:bg-brand-gold-hover hover:shadow-brand-gold/40 no-underline"
           >
             <Icon icon="mdi:rocket-launch-outline" className="text-lg" />
             Start Planning
-          </a>
+          </Link>
           <a
             href="#companies"
             className="inline-flex items-center gap-2 rounded-full border border-white/30 px-8 py-3.5 text-base font-medium text-white transition hover:border-white/60 hover:bg-white/10 hover:text-brand-gold"

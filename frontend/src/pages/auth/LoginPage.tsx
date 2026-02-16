@@ -132,15 +132,15 @@ export function LoginPage() {
                   className="h-12 w-full rounded-xl border border-gray-300 bg-white pl-10 pr-12 text-sm text-gray-900 outline-none placeholder:text-gray-400 focus:border-brand-ocean-light focus:ring-2 focus:ring-brand-ocean-light/20"
                 />
 
-                <motion.button
+                <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  whileTap={{ scale: 0.98 }}
+                  // whileTap={{ scale: 0.98 }}
                   className="absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-2 py-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-brand-ocean-light/20"
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
                   <Icon icon={showPassword ? 'lucide:eye-off' : 'lucide:eye'} className="h-[18px] w-[18px]" />
-                </motion.button>
+                </button>
               </div>
             </label>
 
