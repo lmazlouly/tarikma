@@ -7,6 +7,7 @@ import com.tarikma.app.entity.CompanyMember;
 import com.tarikma.app.entity.Guide;
 import com.tarikma.app.entity.Role;
 import com.tarikma.app.entity.User;
+import com.tarikma.app.exception.ConflictException;
 import com.tarikma.app.repository.CompanyMemberRepository;
 import com.tarikma.app.repository.CompanyRepository;
 import com.tarikma.app.repository.GuideRepository;
@@ -61,7 +62,7 @@ public class UserService {
         }
 
         if (userRepository.existsByEmail(normalizedEmail)) {
-            throw new IllegalArgumentException("email already registered");
+            throw new ConflictException("email already registered");
         }
 
         RegistrationUserType userType = request.getUserType();
@@ -98,6 +99,8 @@ public class UserService {
             company = companyRepository.save(company);
 
             CompanyMember owner = new CompanyMember();
+            owner.setCompanyId(company.getId());
+            owner.setUserId(user.getId());
             owner.setCompany(company);
             owner.setUser(user);
             owner.setMemberRole("owner");

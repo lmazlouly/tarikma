@@ -2,6 +2,8 @@
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+ALTER TABLE users ADD COLUMN IF NOT EXISTS enabled BOOLEAN NOT NULL DEFAULT TRUE;
+
 -- Ensure ADMIN role exists
 INSERT INTO roles (name) VALUES ('ADMIN') ON CONFLICT (name) DO NOTHING;
 
@@ -9,7 +11,6 @@ INSERT INTO roles (name) VALUES ('ADMIN') ON CONFLICT (name) DO NOTHING;
 INSERT INTO users (
     enabled,
     password_hash,
-    username,
     phone,
     created_at,
     email,
@@ -19,7 +20,6 @@ INSERT INTO users (
 VALUES (
     TRUE,
     crypt('tarikma1234', gen_salt('bf')),
-    'admin@tarik.ma',
     '',
     NOW(),
     'admin@tarik.ma',

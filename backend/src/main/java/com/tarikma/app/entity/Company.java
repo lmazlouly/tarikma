@@ -24,6 +24,9 @@ public class Company {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Column(name = "is_verified", nullable = false)
+    private boolean verified = false;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -64,5 +67,13 @@ public class Company {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isVerified() {
+        return verified;
+    }
+
+    public void setVerified(boolean verified) {
+        this.verified = verified;
     }
 }

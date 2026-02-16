@@ -39,6 +39,9 @@ public class User {
     @Column(name = "is_verified", nullable = false)
     private boolean verified = false;
 
+    @Column(name = "enabled", nullable = false)
+    private boolean enabled = true;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
 
@@ -112,6 +115,14 @@ public class User {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public Set<Role> getRoles() {
