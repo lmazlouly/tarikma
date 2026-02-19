@@ -11,7 +11,7 @@ import org.springframework.security.oauth2.jwt.JwtEncoderParameters;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class JwtService {
@@ -30,32 +30,23 @@ public class JwtService {
         this.expirationMinutes = expirationMinutes;
     }
 
-    public String generateToken(String username) {
-        return generateToken(username, null);
-    }
-
     public String generateToken(User user) {
-        String role = user.getRoles().stream()
+        List<String> roles = user.getRoles().stream()
                 .map(Role::getName)
-                .min(Comparator.naturalOrder())
-                .orElse("USER");
+                .sorted()
+                .toList();
 
-        return generateToken(user.getUsername(), role);
-    }
-
-    public String generateToken(String username, String role) {
         Instant now = Instant.now();
         Instant expiresAt = now.plusSeconds(expirationMinutes * 60);
-
-        String normalizedRole = (role == null || role.isBlank()) ? "USER" : role.trim().toUpperCase();
 
         JwtClaimsSet claims = JwtClaimsSet.builder()
                 .issuer(issuer)
                 .issuedAt(now)
                 .expiresAt(expiresAt)
-                .subject(username)
-                .claim("username", username)
-                .claim("role", normalizedRole)
+                .subject(user.getEmail())
+                .claim("email", user.getEmail())
+                .claim("fullName", user.getFullName())
+                .claim("roles", roles)
                 .build();
 
         JwsHeader jwsHeader = JwsHeader.with(MacAlgorithm.HS256).build();

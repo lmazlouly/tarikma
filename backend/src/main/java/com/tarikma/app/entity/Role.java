@@ -23,7 +23,7 @@ public class Role {
     @Column(name = "name", nullable = false, unique = true, length = 50)
     private String name;
 
-    @ManyToMany(mappedBy = "roles", fetch = FetchType.LAZY)
+    @ManyToMany(mappedBy = "roles", fetch = FetchType.EAGER)
     private Set<User> users = new HashSet<>();
 
     public Role() {

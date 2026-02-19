@@ -1,0 +1,96 @@
+package com.tarikma.app.entity;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.MapsId;
+import jakarta.persistence.OneToOne;
+import jakarta.persistence.Table;
+
+@Entity
+@Table(name = "guides")
+public class Guide {
+
+    @Id
+    @Column(name = "user_id")
+    private Long userId;
+
+    @OneToOne(fetch = FetchType.EAGER)
+    @MapsId
+    @JoinColumn(name = "user_id")
+    private User user;
+
+    @Column(name = "guide_type", nullable = false, length = 20)
+    private String guideType;
+
+    @ManyToOne(fetch = FetchType.EAGER)
+    @JoinColumn(name = "company_id")
+    private Company company;
+
+    @Column(name = "verification_status", nullable = false, length = 20)
+    private String verificationStatus = "pending";
+
+    @Column(name = "bio", columnDefinition = "TEXT")
+    private String bio;
+
+    @Column(name = "languages", columnDefinition = "TEXT")
+    private String languages;
+
+    public Guide() {
+    }
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public User getUser() {
+        return user;
+    }
+
+    public void setUser(User user) {
+        this.user = user;
+    }
+
+    public String getGuideType() {
+        return guideType;
+    }
+
+    public void setGuideType(String guideType) {
+        this.guideType = guideType;
+    }
+
+    public Company getCompany() {
+        return company;
+    }
+
+    public void setCompany(Company company) {
+        this.company = company;
+    }
+
+    public String getVerificationStatus() {
+        return verificationStatus;
+    }
+
+    public void setVerificationStatus(String verificationStatus) {
+        this.verificationStatus = verificationStatus;
+    }
+
+    public String getBio() {
+        return bio;
+    }
+
+    public void setBio(String bio) {
+        this.bio = bio;
+    }
+
+    public String getLanguages() {
+        return languages;
+    }
+
+    public void setLanguages(String languages) {
+        this.languages = languages;
+    }
+}

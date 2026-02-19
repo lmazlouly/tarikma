@@ -5,11 +5,25 @@
  * Backend API for Tarik.ma
  * OpenAPI spec version: v1
  */
+import type { RegisterRequestUserType } from './registerRequestUserType';
 
 export interface RegisterRequest {
+  userType: RegisterRequestUserType;
+  /**
+   * @minLength 0
+   * @maxLength 150
+   */
+  fullName: string;
   /** @minLength 1 */
-  username: string;
-  /** @minLength 1 */
+  email: string;
+  /**
+   * @minLength 6
+   * @maxLength 2147483647
+   */
   password: string;
-  role?: string;
+  phone?: string;
+  companyName?: string;
+  companyDescription?: string;
+  bio?: string;
+  languages?: string;
 }

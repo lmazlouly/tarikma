@@ -2,11 +2,222 @@
 @tailwind components;
 @tailwind utilities;
 
-html,
-body {
-  height: 100%;
+/* ═══════════════════════════════════════════════════════════
+   TARIK.MA — Global Design Tokens (CSS Custom Properties)
+   ═══════════════════════════════════════════════════════════ */
+:root {
+  /* Brand Ocean (Primary) */
+  --color-ocean: #0E2A47;
+  --color-ocean-hover: #143A5F;
+  --color-ocean-light: #1C4C78;
+
+  /* Brand Sand (Secondary) */
+  --color-sand: #F4EFE6;
+  --color-sand-light: #FBF8F2;
+  --color-sand-muted: #E6DDCF;
+
+  /* Brand Gold (Accent) */
+  --color-gold: #C8A84E;
+  --color-gold-hover: #B8923D;
+  --color-gold-soft: #E7D6A3;
+
+  /* Dark Mode Base */
+  --color-dark: #0B1623;
+  --color-dark-surface: #111F2E;
+  --color-dark-border: #1E2D3D;
+
+  /* Semantic */
+  --color-success: #2E7D32;
+  --color-error: #C62828;
+  --color-warning: #ED6C02;
+
+  /* Role Accents */
+  --color-role-tourist: #0E2A47;
+  --color-role-company: #C8A84E;
+  --color-role-guide: #1F7A8C;
 }
 
-body {
-  margin: 0;
+/* ═══════════════════════════════════════════════════════════
+   @layer base — Global element defaults
+   ═══════════════════════════════════════════════════════════ */
+@layer base {
+  html,
+  body {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    @apply bg-white text-gray-900 antialiased;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  .dark body {
+    @apply bg-brand-dark text-gray-100;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight text-brand-ocean;
+  }
+
+  .dark h1, .dark h2, .dark h3,
+  .dark h4, .dark h5, .dark h6 {
+    @apply text-white;
+  }
+
+  a {
+    @apply text-brand-ocean-light underline-offset-2 transition-colors hover:text-brand-ocean;
+  }
+
+  .dark a {
+    @apply text-brand-gold hover:text-brand-gold-soft;
+  }
+
+  ::selection {
+    background: rgba(14, 42, 71, 0.15);
+  }
+
+  .dark ::selection {
+    background: rgba(200, 168, 78, 0.25);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   @layer components — Reusable brand components
+   Any code dropped into the project can use these classes.
+   ═══════════════════════════════════════════════════════════ */
+@layer components {
+  /* ── Buttons ── */
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2
+           rounded-xl bg-brand-ocean px-5 py-3
+           text-sm font-medium text-white
+           transition-colors
+           hover:bg-brand-ocean-hover
+           focus:outline-none focus:ring-2 focus:ring-brand-ocean-light/40
+           disabled:opacity-60 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2
+           rounded-xl bg-brand-sand px-5 py-3
+           text-sm font-medium text-brand-ocean
+           transition-colors
+           hover:bg-brand-sand-muted
+           focus:outline-none focus:ring-2 focus:ring-brand-ocean/10
+           disabled:opacity-60 disabled:pointer-events-none;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2
+           rounded-xl bg-brand-gold px-5 py-3
+           text-sm font-medium text-brand-dark
+           transition-colors
+           hover:bg-brand-gold-hover
+           focus:outline-none focus:ring-2 focus:ring-brand-gold-soft/40
+           disabled:opacity-60 disabled:pointer-events-none;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2
+           rounded-xl bg-transparent px-5 py-3
+           text-sm font-medium text-brand-ocean
+           transition-colors
+           hover:bg-brand-sand
+           focus:outline-none focus:ring-2 focus:ring-brand-ocean/10
+           disabled:opacity-60 disabled:pointer-events-none;
+  }
+
+  /* ── Inputs ── */
+  .input {
+    @apply h-12 w-full rounded-xl border border-gray-300 bg-white
+           px-3 text-sm text-gray-900
+           outline-none placeholder:text-gray-400
+           transition-colors
+           focus:border-brand-ocean-light focus:ring-2 focus:ring-brand-ocean-light/20;
+  }
+
+  .dark .input {
+    @apply border-brand-dark-border bg-brand-dark-surface text-gray-100
+           placeholder:text-gray-500
+           focus:border-brand-ocean-light focus:ring-brand-ocean-light/30;
+  }
+
+  .textarea {
+    @apply w-full resize-none rounded-xl border border-gray-300 bg-white
+           px-3 py-2 text-sm text-gray-900
+           outline-none placeholder:text-gray-400
+           transition-colors
+           focus:border-brand-ocean-light focus:ring-2 focus:ring-brand-ocean-light/20;
+  }
+
+  .dark .textarea {
+    @apply border-brand-dark-border bg-brand-dark-surface text-gray-100
+           placeholder:text-gray-500
+           focus:border-brand-ocean-light focus:ring-brand-ocean-light/30;
+  }
+
+  /* ── Cards ── */
+  .card {
+    @apply rounded-2xl border border-gray-200 bg-white
+           shadow-[0_8px_30px_rgba(0,0,0,0.06)];
+  }
+
+  .dark .card {
+    @apply border-brand-dark-border bg-brand-dark-surface
+           shadow-[0_8px_30px_rgba(0,0,0,0.25)];
+  }
+
+  .card-sand {
+    @apply rounded-2xl border border-brand-sand-muted bg-brand-sand;
+  }
+
+  /* ── Badges ── */
+  .badge-ocean {
+    @apply inline-flex items-center gap-1.5 rounded-full
+           bg-brand-ocean/10 px-3 py-1 text-xs font-medium text-brand-ocean;
+  }
+
+  .badge-gold {
+    @apply inline-flex items-center gap-1.5 rounded-full
+           bg-brand-gold/10 px-3 py-1 text-xs font-medium text-brand-gold-hover;
+  }
+
+  .badge-guide {
+    @apply inline-flex items-center gap-1.5 rounded-full
+           bg-role-guide/10 px-3 py-1 text-xs font-medium text-role-guide;
+  }
+
+  /* ── Section backgrounds (landing rhythm) ── */
+  .section-ocean {
+    @apply bg-brand-ocean text-white;
+  }
+
+  .section-sand {
+    @apply bg-brand-sand text-brand-ocean;
+  }
+
+  .section-white {
+    @apply bg-white text-gray-900;
+  }
+
+  .section-ocean-light {
+    @apply bg-brand-ocean-light text-white;
+  }
+
+  /* ── Alert / feedback ── */
+  .alert-error {
+    @apply flex items-start gap-2 rounded-xl border border-red-200
+           bg-red-50 px-3 py-2 text-sm text-brand-error;
+  }
+
+  .alert-success {
+    @apply flex items-start gap-2 rounded-xl border border-green-200
+           bg-green-50 px-3 py-2 text-sm text-brand-success;
+  }
+
+  .alert-warning {
+    @apply flex items-start gap-2 rounded-xl border border-orange-200
+           bg-orange-50 px-3 py-2 text-sm text-brand-warning;
+  }
 }

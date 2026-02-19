@@ -1,8 +1,8 @@
 import { RouterProvider, createBrowserRouter } from 'react-router-dom'
 import { RootLayout } from '../layouts/RootLayout'
+import { DashboardLayout } from '../layouts/DashboardLayout'
 import { ProtectedRoute } from './ProtectedRoute'
-import { DashboardPage } from '../../pages/dashboard/DashboardPage'
-import { AdminPage } from '../../pages/admin/AdminPage'
+import { GuestRoute } from './GuestRoute'
 
 const router = createBrowserRouter([
   {
@@ -20,37 +20,177 @@ const router = createBrowserRouter([
         path: 'login',
         lazy: async () => {
           const m = await import('../../pages/auth/LoginPage')
-          return { Component: m.LoginPage }
+          const Page = m.LoginPage
+          return {
+            Component: () => (
+              <GuestRoute>
+                <Page />
+              </GuestRoute>
+            ),
+          }
         },
       },
       {
         path: 'register',
         lazy: async () => {
           const m = await import('../../pages/auth/RegisterPage')
-          return { Component: m.RegisterPage }
+          const Page = m.RegisterPage
+          return {
+            Component: () => (
+              <GuestRoute>
+                <Page />
+              </GuestRoute>
+            ),
+          }
         },
       },
       {
         path: 'dashboard',
-        element: (
-          <ProtectedRoute>
-            <DashboardPage />
-          </ProtectedRoute>
-        ),
+        lazy: async () => {
+          const m = await import('../../pages/dashboard/DashboardPage')
+          return {
+            Component: () => (
+              <ProtectedRoute>
+                <m.DashboardPage />
+              </ProtectedRoute>
+            ),
+          }
+        },
       },
       {
-        path: 'admin',
-        element: (
-          <ProtectedRoute requireRole="ADMIN">
-            <AdminPage />
-          </ProtectedRoute>
-        ),
+        path: 'plan',
+        lazy: async () => {
+          const m = await import('../../pages/plan/PlanningPage')
+          return { Component: m.PlanningPage }
+        },
+      },
+      {
+        path: 'circuits',
+        lazy: async () => {
+          const m = await import('../../pages/circuits/CircuitsPage')
+          const Page = m.CircuitsPage
+          return {
+            Component: () => (
+              <ProtectedRoute>
+                <Page />
+              </ProtectedRoute>
+            ),
+          }
+        },
+      },
+      {
+        path: 'circuits/:id',
+        lazy: async () => {
+          const m = await import('../../pages/circuits/CircuitPlanningPage')
+          const Page = m.CircuitPlanningPage
+          return {
+            Component: () => (
+              <ProtectedRoute>
+                <Page />
+              </ProtectedRoute>
+            ),
+          }
+        },
+      },
+      {
+        path: 'plan/circuits',
+        lazy: async () => {
+          const m = await import('../../pages/circuits/CircuitsPage')
+          const Page = m.CircuitsPage
+          return {
+            Component: () => (
+              <ProtectedRoute>
+                <Page />
+              </ProtectedRoute>
+            ),
+          }
+        },
+      },
+      {
+        path: 'plan/circuits/:id',
+        lazy: async () => {
+          const m = await import('../../pages/circuits/CircuitPlanningPage')
+          const Page = m.CircuitPlanningPage
+          return {
+            Component: () => (
+              <ProtectedRoute>
+                <Page />
+              </ProtectedRoute>
+            ),
+          }
+        },
       },
       {
         path: '*',
         lazy: async () => {
           const m = await import('../../pages/not-found/NotFoundPage')
           return { Component: m.NotFoundPage }
+        },
+      },
+    ],
+  },
+  {
+    path: '/admin',
+    element: (
+      <ProtectedRoute requireRole="ADMIN">
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const m = await import('../../pages/admin/AdminOverviewPage')
+          return { Component: m.AdminOverviewPage }
+        },
+      },
+      {
+        path: 'users',
+        lazy: async () => {
+          const m = await import('../../pages/admin/AdminUsersPage')
+          return { Component: m.AdminUsersPage }
+        },
+      },
+      {
+        path: 'companies',
+        lazy: async () => {
+          const m = await import('../../pages/admin/AdminCompaniesPage')
+          return { Component: m.AdminCompaniesPage }
+        },
+      },
+      {
+        path: 'company-members',
+        lazy: async () => {
+          const m = await import('../../pages/admin/AdminCompanyMembersPage')
+          return { Component: m.AdminCompanyMembersPage }
+        },
+      },
+      {
+        path: 'guides',
+        lazy: async () => {
+          const m = await import('../../pages/admin/AdminGuidesPage')
+          return { Component: m.AdminGuidesPage }
+        },
+      },
+      {
+        path: 'roles',
+        lazy: async () => {
+          const m = await import('../../pages/admin/AdminRolesPage')
+          return { Component: m.AdminRolesPage }
+        },
+      },
+      {
+        path: 'cities',
+        lazy: async () => {
+          const m = await import('../../pages/admin/AdminCitiesPage')
+          return { Component: m.AdminCitiesPage }
+        },
+      },
+      {
+        path: 'places',
+        lazy: async () => {
+          const m = await import('../../pages/admin/AdminPlacesPage')
+          return { Component: m.AdminPlacesPage }
         },
       },
     ],
