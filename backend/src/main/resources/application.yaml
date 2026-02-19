@@ -34,3 +34,6 @@ app:
       secret: "V6ztxIHtw8NSDNE1ZEKCENzZ083/6fDgr96qJTLNA+aevYsieS08CNf+DCWqLy3l"
       issuer: "tarikma"
       expiration-minutes: 60
+  ai:
+    groq-api-key: "${GROQ_API_KEY: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}"
+    openweathermap-api-key: "${OPENWEATHERMAP_API_KEY:}"

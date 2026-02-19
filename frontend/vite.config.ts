@@ -12,6 +12,8 @@ export default defineConfig(({ mode }) => {
       __API_BASE_URL__: JSON.stringify(apiBaseUrl),
     },
     server: {
+      host: true,
+      allowedHosts: ['dev.mnova.co.uk'],
       proxy: {
         '/api': {
           target: 'http://localhost:8080',
