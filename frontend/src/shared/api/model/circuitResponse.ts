@@ -14,6 +14,7 @@ export interface CircuitResponse {
   cityName?: string;
   name?: string;
   notes?: string;
+  priceMad?: number;
   createdAt?: string;
   createdBy?: number;
   stops?: CircuitStopResponse[];

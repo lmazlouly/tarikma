@@ -121,6 +121,34 @@ const router = createBrowserRouter([
         },
       },
       {
+        path: 'tours',
+        lazy: async () => {
+          const m = await import('../../pages/tours/ToursPage')
+          return { Component: m.ToursPage }
+        },
+      },
+      {
+        path: 'tours/booking-success',
+        lazy: async () => {
+          const m = await import('../../pages/tours/BookingSuccessPage')
+          const Page = m.BookingSuccessPage
+          return {
+            Component: () => (
+              <ProtectedRoute>
+                <Page />
+              </ProtectedRoute>
+            ),
+          }
+        },
+      },
+      {
+        path: 'tours/:id',
+        lazy: async () => {
+          const m = await import('../../pages/tours/TourDetailPage')
+          return { Component: m.TourDetailPage }
+        },
+      },
+      {
         path: '*',
         lazy: async () => {
           const m = await import('../../pages/not-found/NotFoundPage')

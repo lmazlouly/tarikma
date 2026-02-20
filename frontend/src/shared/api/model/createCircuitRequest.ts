@@ -14,4 +14,6 @@ export interface CreateCircuitRequest {
    */
   name: string;
   notes?: string;
+  /** @minimum 0 */
+  priceMad?: number;
 }

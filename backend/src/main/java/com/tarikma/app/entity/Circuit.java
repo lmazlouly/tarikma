@@ -13,6 +13,7 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,6 +35,9 @@ public class Circuit {
 
     @Column(name = "notes", columnDefinition = "TEXT")
     private String notes;
+
+    @Column(name = "price_mad", precision = 10, scale = 2)
+    private BigDecimal priceMad;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     private Instant createdAt;
@@ -84,6 +88,14 @@ public class Circuit {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public BigDecimal getPriceMad() {
+        return priceMad;
+    }
+
+    public void setPriceMad(BigDecimal priceMad) {
+        this.priceMad = priceMad;
     }
 
     public Instant getCreatedAt() {

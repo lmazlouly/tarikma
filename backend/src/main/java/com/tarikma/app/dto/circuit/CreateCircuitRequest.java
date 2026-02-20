@@ -1,8 +1,11 @@
 package com.tarikma.app.dto.circuit;
 
+import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+
+import java.math.BigDecimal;
 
 public class CreateCircuitRequest {
 
@@ -14,6 +17,9 @@ public class CreateCircuitRequest {
     private String name;
 
     private String notes;
+
+    @DecimalMin(value = "0.00", message = "Price must be >= 0")
+    private BigDecimal priceMad;
 
     public Long getCityId() {
         return cityId;
@@ -37,5 +43,13 @@ public class CreateCircuitRequest {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public BigDecimal getPriceMad() {
+        return priceMad;
+    }
+
+    public void setPriceMad(BigDecimal priceMad) {
+        this.priceMad = priceMad;
     }
 }

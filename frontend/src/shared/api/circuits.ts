@@ -6,6 +6,7 @@ export type CircuitSummary = {
   cityName: string | null
   name: string
   notes: string | null
+  priceMad: number | null
   createdAt: string
   stopCount: number
 }
@@ -45,6 +46,7 @@ export type Circuit = {
   cityName: string | null
   name: string
   notes: string | null
+  priceMad: number | null
   createdAt: string
   createdBy: number
   stops: CircuitStop[]
@@ -63,6 +65,7 @@ export type CreateCircuitRequest = {
   cityId: number
   name: string
   notes?: string | null
+  priceMad?: number | null
 }
 
 export function listMyCircuits(cityId?: number, signal?: AbortSignal) {
@@ -113,6 +116,101 @@ export function aiReorderStops(id: number, signal?: AbortSignal) {
   return customInstance<Circuit>({
     url: `/api/circuits/${id}/ai-reorder`,
     method: 'POST',
+    signal,
+  })
+}
+
+export type AiSuggestPlacesRequest = {
+  count?: number
+  preferences?: string
+}
+
+export function aiSuggestPlaces(id: number, data: AiSuggestPlacesRequest, signal?: AbortSignal) {
+  return customInstance<Circuit>({
+    url: `/api/circuits/${id}/ai-suggest-places`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data,
+    signal,
+  })
+}
+
+export type UpdateCircuitRequest = {
+  name?: string
+  notes?: string
+  priceMad?: number
+}
+
+export function updateCircuit(id: number, data: UpdateCircuitRequest, signal?: AbortSignal) {
+  return customInstance<Circuit>({
+    url: `/api/circuits/${id}`,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    data,
+    signal,
+  })
+}
+
+// ── Circuit Sessions ────────────────────────────────────────
+
+export type CircuitSession = {
+  id: number
+  circuitId: number
+  startDateTime: string
+  endDateTime: string | null
+  maxParticipants: number | null
+  notes: string | null
+  status: string
+  createdAt: string
+}
+
+export type CreateCircuitSessionRequest = {
+  startDateTime: string
+  endDateTime?: string | null
+  maxParticipants?: number | null
+  notes?: string | null
+}
+
+export type UpdateCircuitSessionRequest = {
+  startDateTime?: string
+  endDateTime?: string
+  maxParticipants?: number
+  notes?: string
+  status?: string
+}
+
+export function listSessions(circuitId: number, signal?: AbortSignal) {
+  return customInstance<CircuitSession[]>({
+    url: `/api/circuits/${circuitId}/sessions`,
+    method: 'GET',
+    signal,
+  })
+}
+
+export function createSession(circuitId: number, data: CreateCircuitSessionRequest, signal?: AbortSignal) {
+  return customInstance<CircuitSession>({
+    url: `/api/circuits/${circuitId}/sessions`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    data,
+    signal,
+  })
+}
+
+export function updateSession(circuitId: number, sessionId: number, data: UpdateCircuitSessionRequest, signal?: AbortSignal) {
+  return customInstance<CircuitSession>({
+    url: `/api/circuits/${circuitId}/sessions/${sessionId}`,
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    data,
+    signal,
+  })
+}
+
+export function deleteSession(circuitId: number, sessionId: number, signal?: AbortSignal) {
+  return customInstance<void>({
+    url: `/api/circuits/${circuitId}/sessions/${sessionId}`,
+    method: 'DELETE',
     signal,
   })
 }

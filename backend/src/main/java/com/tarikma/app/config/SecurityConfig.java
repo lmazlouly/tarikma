@@ -65,9 +65,11 @@ public class SecurityConfig {
                                 "/api/auth/**",
                                 "/api/health",
                                 "/swagger-ui/**",
-                                "/v3/api-docs/**"
+                                "/v3/api-docs/**",
+                                "/api/webhooks/stripe"
                         ).permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/cities/**").permitAll()
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/api/tours/**").permitAll()
                         .requestMatchers(org.springframework.http.HttpMethod.POST, "/api/cities/*/places")
                                 .hasAnyRole("ADMIN", "GUIDE", "COMPANY_OWNER", "COMPANY_STAFF")
                         .requestMatchers(

@@ -4,9 +4,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { Icon } from '@iconify/react'
 import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
-import { getMyCircuit, listCircuitPlanningWarnings, aiReorderStops } from '../../shared/api/circuits'
+import { getMyCircuit, listCircuitPlanningWarnings, aiReorderStops, aiSuggestPlaces, updateCircuit, listSessions, createSession, deleteSession as deleteSessionApi } from '../../shared/api/circuits'
 import type { CircuitStop } from '../../shared/api/circuits'
-import { deleteStop, updateStop } from '../../shared/api/circuit-controller/circuit-controller'
+import { customInstance } from '../../shared/api/orval-mutator'
+import { addStop, deleteStop, updateStop } from '../../shared/api/circuit-controller/circuit-controller'
 import type { UpdateCircuitStopRequest } from '../../shared/api/model'
 import { PlanningWarningsPanel } from '../../features/planningWarnings/PlanningWarningsPanel'
 import { ensureRTLPlugin } from '../../shared/mapRtlPlugin'
@@ -93,6 +94,24 @@ export function CircuitPlanningPage() {
   const mapReady = useRef(false)
   const queryClient = useQueryClient()
   const [stopTimings, setStopTimings] = useState<StopTimings>({})
+  const [editingPrice, setEditingPrice] = useState(false)
+  const [priceInput, setPriceInput] = useState('')
+  const [showAiSuggest, setShowAiSuggest] = useState(false)
+  const [aiSuggestPrefs, setAiSuggestPrefs] = useState('')
+  const [aiSuggestCount, setAiSuggestCount] = useState(3)
+  const [showAddPlace, setShowAddPlace] = useState(false)
+  const [newPlaceName, setNewPlaceName] = useState('')
+  const [newPlaceCategory, setNewPlaceCategory] = useState('')
+  const [newPlaceLat, setNewPlaceLat] = useState('')
+  const [newPlaceLng, setNewPlaceLng] = useState('')
+  const [newPlaceAddress, setNewPlaceAddress] = useState('')
+  const [showAddSession, setShowAddSession] = useState(false)
+  const [sessionDate, setSessionDate] = useState('')
+  const [sessionTime, setSessionTime] = useState('')
+  const [sessionEndDate, setSessionEndDate] = useState('')
+  const [sessionEndTime, setSessionEndTime] = useState('')
+  const [sessionMaxParticipants, setSessionMaxParticipants] = useState('')
+  const [sessionNotes, setSessionNotes] = useState('')
 
   const circuitQuery = useQuery({
     queryKey: ['my-circuit', circuitId],
@@ -140,8 +159,85 @@ export function CircuitPlanningPage() {
     },
   })
 
+  const priceMutation = useMutation({
+    mutationFn: (priceMad: number) => updateCircuit(circuitId, { priceMad }),
+    onSuccess: async () => {
+      setEditingPrice(false)
+      await queryClient.invalidateQueries({ queryKey: ['my-circuit', circuitId] })
+    },
+  })
+
+  const aiSuggestMutation = useMutation({
+    mutationFn: () => aiSuggestPlaces(circuitId, { count: aiSuggestCount, preferences: aiSuggestPrefs || undefined }),
+    onSuccess: async () => {
+      setShowAiSuggest(false)
+      setAiSuggestPrefs('')
+      await queryClient.invalidateQueries({ queryKey: ['my-circuit', circuitId] })
+    },
+  })
+
+  const addPlaceMutation = useMutation({
+    mutationFn: (data: { name: string; category: string; latitude: number; longitude: number; address?: string }) => {
+      return customInstance<{ id: number }>({
+        url: `/api/cities/${circuit!.cityId}/places`,
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        data,
+      }).then((place: { id: number }) =>
+        addStop(circuitId, { placeId: place.id })
+      )
+    },
+    onSuccess: async () => {
+      setShowAddPlace(false)
+      setNewPlaceName('')
+      setNewPlaceCategory('')
+      setNewPlaceLat('')
+      setNewPlaceLng('')
+      setNewPlaceAddress('')
+      await queryClient.invalidateQueries({ queryKey: ['my-circuit', circuitId] })
+    },
+  })
+
+  const sessionsQuery = useQuery({
+    queryKey: ['circuit-sessions', circuitId],
+    queryFn: ({ signal }) => listSessions(circuitId, signal),
+    enabled: valid,
+  })
+
+  const createSessionMutation = useMutation({
+    mutationFn: () => {
+      const startDt = new Date(`${sessionDate}T${sessionTime}`).toISOString()
+      const endDt = sessionEndDate && sessionEndTime ? new Date(`${sessionEndDate}T${sessionEndTime}`).toISOString() : undefined
+      const maxP = sessionMaxParticipants ? parseInt(sessionMaxParticipants) : undefined
+      return createSession(circuitId, {
+        startDateTime: startDt,
+        endDateTime: endDt,
+        maxParticipants: maxP,
+        notes: sessionNotes || undefined,
+      })
+    },
+    onSuccess: async () => {
+      setShowAddSession(false)
+      setSessionDate('')
+      setSessionTime('')
+      setSessionEndDate('')
+      setSessionEndTime('')
+      setSessionMaxParticipants('')
+      setSessionNotes('')
+      await queryClient.invalidateQueries({ queryKey: ['circuit-sessions', circuitId] })
+    },
+  })
+
+  const deleteSessionMutation = useMutation({
+    mutationFn: (sessionId: number) => deleteSessionApi(circuitId, sessionId),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['circuit-sessions', circuitId] })
+    },
+  })
+
   const circuit = circuitQuery.data
   const warnings = warningsQuery.data ?? []
+  const sessions = sessionsQuery.data ?? []
 
   const orderedStops = useMemo(
     () => [...(circuit?.stops ?? [])].sort((a, b) => (a.position ?? 0) - (b.position ?? 0)),
@@ -355,14 +451,47 @@ export function CircuitPlanningPage() {
           {circuit?.cityName && (
             <p className="mt-0.5 text-sm text-gray-500">{circuit.cityName}</p>
           )}
+          {circuit && (
+            <div className="mt-1.5 flex items-center gap-2">
+              {editingPrice ? (
+                <form className="flex items-center gap-1.5" onSubmit={(e) => { e.preventDefault(); priceMutation.mutate(parseFloat(priceInput) || 0) }}>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={priceInput}
+                    onChange={(e) => setPriceInput(e.target.value)}
+                    className="w-24 rounded border border-gray-300 px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                    autoFocus
+                  />
+                  <span className="text-xs text-gray-500">MAD</span>
+                  <button type="submit" disabled={priceMutation.isPending} className="rounded bg-brand-ocean px-2 py-1 text-xs font-semibold text-white disabled:opacity-60">
+                    {priceMutation.isPending ? '…' : 'Save'}
+                  </button>
+                  <button type="button" onClick={() => setEditingPrice(false)} className="text-xs text-gray-400 hover:text-gray-600">Cancel</button>
+                </form>
+              ) : (
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-1 rounded-full bg-brand-gold/10 px-2.5 py-0.5 text-xs font-semibold text-brand-gold-hover hover:bg-brand-gold/20 transition"
+                  onClick={() => { setPriceInput(circuit.priceMad != null ? String(circuit.priceMad) : ''); setEditingPrice(true) }}
+                >
+                  <Icon icon="mdi:currency-usd" className="text-sm" />
+                  {circuit.priceMad != null ? `${circuit.priceMad} MAD` : 'Set price'}
+                </button>
+              )}
+            </div>
+          )}
         </div>
-        <Link
-          to={`/plan${circuit ? `?cityId=${circuit.cityId}&circuitId=${circuit.id}` : ''}`}
-          className="btn-primary px-4 py-2 text-sm no-underline"
-        >
-          <Icon icon="mdi:map-plus" className="mr-1.5 text-base" />
-          Add stops
-        </Link>
+        <div className="flex flex-col gap-2 items-end">
+          <Link
+            to={`/plan${circuit ? `?cityId=${circuit.cityId}&circuitId=${circuit.id}` : ''}`}
+            className="btn-primary px-4 py-2 text-sm no-underline"
+          >
+            <Icon icon="mdi:map-plus" className="mr-1.5 text-base" />
+            Add stops
+          </Link>
+        </div>
       </div>
 
       {circuitQuery.isLoading && (
@@ -555,7 +684,423 @@ export function CircuitPlanningPage() {
               </ol>
             )}
           </div>
+
+          {/* Action buttons: AI Suggest + Add Place */}
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setShowAiSuggest(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-ocean to-brand-ocean-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
+            >
+              <Icon icon="mdi:robot-happy" className="text-base" />
+              AI Suggest Places
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowAddPlace(true)}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-brand-ocean hover:text-brand-ocean"
+            >
+              <Icon icon="mdi:map-marker-plus" className="text-base" />
+              Add New Place
+            </button>
+          </div>
+
+          {/* Sessions */}
+          <div className="card p-5">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-sm font-semibold text-gray-700">
+                <Icon icon="mdi:calendar-clock" className="inline mr-1 text-base align-text-bottom" />
+                Scheduled Sessions
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowAddSession(true)}
+                className="inline-flex items-center gap-1 rounded-lg bg-brand-ocean px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-brand-ocean-hover transition"
+              >
+                <Icon icon="mdi:plus" className="text-sm" />
+                Add Session
+              </button>
+            </div>
+
+            {sessionsQuery.isLoading && (
+              <p className="text-sm text-gray-400 flex items-center gap-1.5">
+                <Icon icon="mdi:loading" className="animate-spin" /> Loading sessions…
+              </p>
+            )}
+            {sessionsQuery.isError && (
+              <div className="alert-error text-sm">Failed to load sessions.</div>
+            )}
+
+            {sessions.length === 0 && !sessionsQuery.isLoading && (
+              <p className="text-sm text-gray-400">No sessions scheduled yet. Add one to set when this circuit will run.</p>
+            )}
+
+            {sessions.length > 0 && (
+              <div className="space-y-2">
+                {sessions.map((s) => {
+                  const start = new Date(s.startDateTime)
+                  const end = s.endDateTime ? new Date(s.endDateTime) : null
+                  const isPast = start.getTime() < Date.now()
+                  const statusColor =
+                    s.status === 'CANCELLED' ? 'bg-red-100 text-red-700' :
+                    s.status === 'COMPLETED' ? 'bg-green-100 text-green-700' :
+                    s.status === 'IN_PROGRESS' ? 'bg-blue-100 text-blue-700' :
+                    isPast ? 'bg-gray-100 text-gray-500' :
+                    'bg-brand-sand text-brand-ocean'
+
+                  return (
+                    <div key={s.id} className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/50 px-4 py-3">
+                      <div className="flex-shrink-0 mt-0.5">
+                        <Icon icon="mdi:calendar-check" className="text-lg text-brand-ocean" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900">
+                            {start.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                          <span className="text-sm text-gray-600">
+                            {start.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}
+                            {end && ` – ${end.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })}`}
+                          </span>
+                          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${statusColor}`}>
+                            {s.status}
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-3 mt-1">
+                          {s.maxParticipants != null && (
+                            <span className="text-xs text-gray-500 flex items-center gap-0.5">
+                              <Icon icon="mdi:account-group" className="text-sm" />
+                              Max {s.maxParticipants}
+                            </span>
+                          )}
+                          {s.notes && (
+                            <span className="text-xs text-gray-500 truncate max-w-[200px]">{s.notes}</span>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => deleteSessionMutation.mutate(s.id)}
+                        disabled={deleteSessionMutation.isPending}
+                        className="flex-shrink-0 rounded-full border border-red-200 p-1 text-red-400 hover:text-red-600 disabled:opacity-40 transition"
+                        aria-label="Delete session"
+                      >
+                        <Icon icon="mdi:trash-can-outline" className="text-sm" />
+                      </button>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+
+            {deleteSessionMutation.isError && (
+              <div className="alert-error text-sm mt-2">Failed to delete session.</div>
+            )}
+          </div>
         </>
+      )}
+
+      {/* AI Suggest Places Modal */}
+      {showAiSuggest && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => !aiSuggestMutation.isPending && setShowAiSuggest(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 pt-5 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Icon icon="mdi:robot-happy" className="text-2xl text-brand-ocean" />
+                <h3 className="text-lg font-bold text-gray-900">AI Suggest Places</h3>
+              </div>
+              <button onClick={() => setShowAiSuggest(false)} disabled={aiSuggestMutation.isPending} className="text-gray-400 hover:text-gray-600 text-xl">
+                <Icon icon="mdi:close" />
+              </button>
+            </div>
+            <div className="px-6 pb-2">
+              <p className="text-sm text-gray-500">AI will suggest real places in {circuit?.cityName ?? 'the city'} and add them to your circuit.</p>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">How many places?</label>
+                <div className="flex gap-2">
+                  {[2, 3, 5, 7].map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setAiSuggestCount(n)}
+                      className={`px-3.5 py-1.5 rounded-lg text-sm font-medium border transition ${aiSuggestCount === n ? 'border-brand-ocean bg-brand-ocean text-white' : 'border-gray-200 text-gray-600 hover:border-brand-ocean'}`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">Preferences (optional)</label>
+                <input
+                  type="text"
+                  value={aiSuggestPrefs}
+                  onChange={(e) => setAiSuggestPrefs(e.target.value)}
+                  placeholder="e.g. restaurants, beaches, historic sites…"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                />
+              </div>
+              {aiSuggestMutation.isError && (
+                <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700">
+                  <Icon icon="mdi:alert-circle" />
+                  {(aiSuggestMutation.error as Error)?.message || 'Failed to suggest places.'}
+                </div>
+              )}
+            </div>
+            <div className="px-6 pb-5 flex justify-end gap-2">
+              <button type="button" onClick={() => setShowAiSuggest(false)} disabled={aiSuggestMutation.isPending} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => aiSuggestMutation.mutate()}
+                disabled={aiSuggestMutation.isPending}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-ocean to-brand-ocean-light px-5 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+              >
+                {aiSuggestMutation.isPending ? (
+                  <><Icon icon="mdi:loading" className="animate-spin" /> Suggesting…</>
+                ) : (
+                  <><Icon icon="mdi:auto-fix" /> Suggest Places</>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Add New Place Modal */}
+      {showAddPlace && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => !addPlaceMutation.isPending && setShowAddPlace(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 pt-5 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Icon icon="mdi:map-marker-plus" className="text-2xl text-brand-ocean" />
+                <h3 className="text-lg font-bold text-gray-900">Add New Place</h3>
+              </div>
+              <button onClick={() => setShowAddPlace(false)} disabled={addPlaceMutation.isPending} className="text-gray-400 hover:text-gray-600 text-xl">
+                <Icon icon="mdi:close" />
+              </button>
+            </div>
+            <div className="px-6 pb-2">
+              <p className="text-sm text-gray-500">Create a new place in {circuit?.cityName ?? 'the city'} and add it as a stop.</p>
+            </div>
+            <form
+              className="px-6 py-4 space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault()
+                const lat = parseFloat(newPlaceLat)
+                const lng = parseFloat(newPlaceLng)
+                if (!newPlaceName.trim() || isNaN(lat) || isNaN(lng)) return
+                addPlaceMutation.mutate({
+                  name: newPlaceName.trim(),
+                  category: newPlaceCategory || 'LANDMARK',
+                  latitude: lat,
+                  longitude: lng,
+                  address: newPlaceAddress || undefined,
+                })
+              }}
+            >
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Name *</label>
+                <input
+                  type="text"
+                  value={newPlaceName}
+                  onChange={(e) => setNewPlaceName(e.target.value)}
+                  placeholder="e.g. Café Hafa"
+                  required
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Category</label>
+                <select
+                  value={newPlaceCategory}
+                  onChange={(e) => setNewPlaceCategory(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                >
+                  <option value="">Select…</option>
+                  {['RESTAURANT', 'CAFE', 'HOTEL', 'MUSEUM', 'MOSQUE', 'PARK', 'BEACH', 'MARKET', 'MONUMENT', 'HISTORIC', 'LANDMARK', 'NATURE'].map((cat) => (
+                    <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Address</label>
+                <input
+                  type="text"
+                  value={newPlaceAddress}
+                  onChange={(e) => setNewPlaceAddress(e.target.value)}
+                  placeholder="Optional"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Latitude *</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={newPlaceLat}
+                    onChange={(e) => setNewPlaceLat(e.target.value)}
+                    placeholder="e.g. 35.785"
+                    required
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Longitude *</label>
+                  <input
+                    type="number"
+                    step="any"
+                    value={newPlaceLng}
+                    onChange={(e) => setNewPlaceLng(e.target.value)}
+                    placeholder="e.g. -5.813"
+                    required
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                  />
+                </div>
+              </div>
+              {addPlaceMutation.isError && (
+                <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700">
+                  <Icon icon="mdi:alert-circle" />
+                  {(addPlaceMutation.error as Error)?.message || 'Failed to add place.'}
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowAddPlace(false)} disabled={addPlaceMutation.isPending} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={addPlaceMutation.isPending || !newPlaceName.trim() || !newPlaceLat || !newPlaceLng}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-brand-ocean px-5 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+                >
+                  {addPlaceMutation.isPending ? (
+                    <><Icon icon="mdi:loading" className="animate-spin" /> Adding…</>
+                  ) : (
+                    <><Icon icon="mdi:plus" /> Add Place & Stop</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Add Session Modal */}
+      {showAddSession && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => !createSessionMutation.isPending && setShowAddSession(false)}>
+          <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="px-6 pt-5 pb-3 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Icon icon="mdi:calendar-plus" className="text-2xl text-brand-ocean" />
+                <h3 className="text-lg font-bold text-gray-900">Schedule Session</h3>
+              </div>
+              <button onClick={() => setShowAddSession(false)} disabled={createSessionMutation.isPending} className="text-gray-400 hover:text-gray-600 text-xl">
+                <Icon icon="mdi:close" />
+              </button>
+            </div>
+            <div className="px-6 pb-2">
+              <p className="text-sm text-gray-500">Set when this circuit will take place.</p>
+            </div>
+            <form
+              className="px-6 py-4 space-y-3"
+              onSubmit={(e) => {
+                e.preventDefault()
+                if (!sessionDate || !sessionTime) return
+                createSessionMutation.mutate()
+              }}
+            >
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Start Date *</label>
+                  <input
+                    type="date"
+                    value={sessionDate}
+                    onChange={(e) => setSessionDate(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Start Time *</label>
+                  <input
+                    type="time"
+                    value={sessionTime}
+                    onChange={(e) => setSessionTime(e.target.value)}
+                    required
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">End Date</label>
+                  <input
+                    type="date"
+                    value={sessionEndDate}
+                    onChange={(e) => setSessionEndDate(e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">End Time</label>
+                  <input
+                    type="time"
+                    value={sessionEndTime}
+                    onChange={(e) => setSessionEndTime(e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Max Participants</label>
+                <input
+                  type="number"
+                  min="1"
+                  value={sessionMaxParticipants}
+                  onChange={(e) => setSessionMaxParticipants(e.target.value)}
+                  placeholder="Optional"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Notes</label>
+                <input
+                  type="text"
+                  value={sessionNotes}
+                  onChange={(e) => setSessionNotes(e.target.value)}
+                  placeholder="Optional notes for this session"
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-brand-ocean"
+                />
+              </div>
+              {createSessionMutation.isError && (
+                <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs text-red-700">
+                  <Icon icon="mdi:alert-circle" />
+                  {(createSessionMutation.error as Error)?.message || 'Failed to create session.'}
+                </div>
+              )}
+              <div className="flex justify-end gap-2 pt-2">
+                <button type="button" onClick={() => setShowAddSession(false)} disabled={createSessionMutation.isPending} className="px-4 py-2 text-sm text-gray-500 hover:text-gray-700">
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={createSessionMutation.isPending || !sessionDate || !sessionTime}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-brand-ocean px-5 py-2 text-sm font-semibold text-white shadow-sm disabled:opacity-60"
+                >
+                  {createSessionMutation.isPending ? (
+                    <><Icon icon="mdi:loading" className="animate-spin" /> Scheduling…</>
+                  ) : (
+                    <><Icon icon="mdi:calendar-check" /> Schedule</>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </section>
   )
