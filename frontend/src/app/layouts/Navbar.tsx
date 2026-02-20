@@ -23,6 +23,9 @@ export function Navbar() {
                 <Link to="/dashboard" className="transition hover:text-gray-900">
                   Dashboard
                 </Link>
+                <Link to="/plan/circuits" className="transition hover:text-gray-900">
+                  Plans
+                </Link>
                 {hasRole('ADMIN') && (
                   <Link to="/admin" className="transition hover:text-gray-900">
                     Admin
@@ -61,10 +64,17 @@ export function Navbar() {
             <span className="text-[10px]">Home</span>
           </Link>
 
-          <Link to="/login" className="flex flex-col items-center gap-0.5 text-gray-400 transition hover:text-gray-900">
-            <Icon icon="mdi:compass-outline" className="text-xl" />
-            <span className="text-[10px]">Explore</span>
-          </Link>
+          {isAuthenticated ? (
+            <Link to="/plan/circuits" className="flex flex-col items-center gap-0.5 text-gray-400 transition hover:text-gray-900">
+              <Icon icon="mdi:map-marker-path" className="text-xl" />
+              <span className="text-[10px]">Plans</span>
+            </Link>
+          ) : (
+            <Link to="/plan" className="flex flex-col items-center gap-0.5 text-gray-400 transition hover:text-gray-900">
+              <Icon icon="mdi:compass-outline" className="text-xl" />
+              <span className="text-[10px]">Explore</span>
+            </Link>
+          )}
 
           {/* Center Logo */}
           <Link
