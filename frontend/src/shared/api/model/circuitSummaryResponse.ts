@@ -12,6 +12,7 @@ export interface CircuitSummaryResponse {
   cityName?: string;
   name?: string;
   notes?: string;
+  priceMad?: number;
   createdAt?: string;
   stopCount?: number;
 }

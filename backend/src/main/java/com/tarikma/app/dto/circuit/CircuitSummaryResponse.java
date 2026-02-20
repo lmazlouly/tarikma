@@ -1,5 +1,6 @@
 package com.tarikma.app.dto.circuit;
 
+import java.math.BigDecimal;
 import java.time.Instant;
 
 public class CircuitSummaryResponse {
@@ -9,6 +10,7 @@ public class CircuitSummaryResponse {
     private String cityName;
     private String name;
     private String notes;
+    private BigDecimal priceMad;
     private Instant createdAt;
     private long stopCount;
 
@@ -50,6 +52,14 @@ public class CircuitSummaryResponse {
 
     public void setNotes(String notes) {
         this.notes = notes;
+    }
+
+    public BigDecimal getPriceMad() {
+        return priceMad;
+    }
+
+    public void setPriceMad(BigDecimal priceMad) {
+        this.priceMad = priceMad;
     }
 
     public Instant getCreatedAt() {

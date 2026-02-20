@@ -36,4 +36,9 @@ app:
       expiration-minutes: 60
   ai:
     groq-api-key: "${GROQ_API_KEY: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}"
-    openweathermap-api-key: "${OPENWEATHERMAP_API_KEY:}"
+    openweathermap-api-key: "${OPENWEATHERMAP_API_KEY:b9679e359b9fcac2f9f0df92bc0cbbec}"
+  stripe:
+    secret-key: "${STRIPE_SECRET_KEY:sk_test_51T2wWi2MxprTG8hQ5LDDHXPWIeEai0z5yEJpLxCsNLVVM1geyXdF3LBlBIesdjgLq5t4f5xPpDrY5PGFmbeCrLpm00SKtNOJyJ}"
+    webhook-secret: "${STRIPE_WEBHOOK_SECRET:pk_test_51T2wWi2MxprTG8hQbucSZyD4xAgeBSgqz7SmeScHAdQOXJVQhWqSrdJAL5EP5gUlNEC4IhT49fPSZO5JQaOgJD3S00gJufqwmQ}"
+    success-url: "${STRIPE_SUCCESS_URL:https://dev.mnova.co.uk/tours/booking-success?session_id={CHECKOUT_SESSION_ID}}"
+    cancel-url: "${STRIPE_CANCEL_URL:https://dev.mnova.co.uk/tours/{tourId}}"

@@ -13,4 +13,6 @@ export interface UpdateCircuitRequest {
    */
   name?: string;
   notes?: string;
+  /** @minimum 0 */
+  priceMad?: number;
 }

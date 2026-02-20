@@ -27,12 +27,16 @@ import type {
 import type {
   AddCircuitStopRequest,
   AiGenerateCircuitRequest,
+  AiSuggestPlacesRequest,
   CircuitPlanningWarningResponse,
   CircuitResponse,
+  CircuitSessionResponse,
   CircuitSummaryResponse,
   CreateCircuitRequest,
+  CreateCircuitSessionRequest,
   ListMyCircuitsParams,
   UpdateCircuitRequest,
+  UpdateCircuitSessionRequest,
   UpdateCircuitStopRequest,
   UpsertCircuitRouteRequest
 } from '.././model';
@@ -356,6 +360,121 @@ const {mutation: mutationOptions} = options ?
 
       return useMutation(mutationOptions, queryClient);
     }
+    export const updateSession = (
+    id: number,
+    sessionId: number,
+    updateCircuitSessionRequest: UpdateCircuitSessionRequest,
+ ) => {
+      
+      
+      return customInstance<CircuitSessionResponse>(
+      {url: `/api/circuits/${id}/sessions/${sessionId}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: updateCircuitSessionRequest
+    },
+      );
+    }
+  
+
+
+export const getUpdateSessionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSession>>, TError,{id: number;sessionId: number;data: UpdateCircuitSessionRequest}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof updateSession>>, TError,{id: number;sessionId: number;data: UpdateCircuitSessionRequest}, TContext> => {
+
+const mutationKey = ['updateSession'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateSession>>, {id: number;sessionId: number;data: UpdateCircuitSessionRequest}> = (props) => {
+          const {id,sessionId,data} = props ?? {};
+
+          return  updateSession(id,sessionId,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateSessionMutationResult = NonNullable<Awaited<ReturnType<typeof updateSession>>>
+    export type UpdateSessionMutationBody = UpdateCircuitSessionRequest
+    export type UpdateSessionMutationError = unknown
+
+    export const useUpdateSession = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateSession>>, TError,{id: number;sessionId: number;data: UpdateCircuitSessionRequest}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateSession>>,
+        TError,
+        {id: number;sessionId: number;data: UpdateCircuitSessionRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getUpdateSessionMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const deleteSession = (
+    id: number,
+    sessionId: number,
+ ) => {
+      
+      
+      return customInstance<void>(
+      {url: `/api/circuits/${id}/sessions/${sessionId}`, method: 'DELETE'
+    },
+      );
+    }
+  
+
+
+export const getDeleteSessionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSession>>, TError,{id: number;sessionId: number}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof deleteSession>>, TError,{id: number;sessionId: number}, TContext> => {
+
+const mutationKey = ['deleteSession'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof deleteSession>>, {id: number;sessionId: number}> = (props) => {
+          const {id,sessionId} = props ?? {};
+
+          return  deleteSession(id,sessionId,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type DeleteSessionMutationResult = NonNullable<Awaited<ReturnType<typeof deleteSession>>>
+    
+    export type DeleteSessionMutationError = unknown
+
+    export const useDeleteSession = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof deleteSession>>, TError,{id: number;sessionId: number}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof deleteSession>>,
+        TError,
+        {id: number;sessionId: number},
+        TContext
+      > => {
+
+      const mutationOptions = getDeleteSessionMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
     export const upsertRoute = (
     id: number,
     upsertCircuitRouteRequest: UpsertCircuitRouteRequest,
@@ -615,6 +734,210 @@ const {mutation: mutationOptions} = options ?
       > => {
 
       const mutationOptions = getAddStopMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const listSessions = (
+    id: number,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CircuitSessionResponse[]>(
+      {url: `/api/circuits/${id}/sessions`, method: 'GET', signal
+    },
+      );
+    }
+  
+
+
+
+export const getListSessionsQueryKey = (id?: number,) => {
+    return [
+    `/api/circuits/${id}/sessions`
+    ] as const;
+    }
+
+    
+export const getListSessionsQueryOptions = <TData = Awaited<ReturnType<typeof listSessions>>, TError = unknown>(id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>>, }
+) => {
+
+const {query: queryOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListSessionsQueryKey(id);
+
+  
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listSessions>>> = ({ signal }) => listSessions(id, signal);
+
+      
+
+      
+
+   return  { queryKey, queryFn, enabled: !!(id), ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData> & { queryKey: DataTag<QueryKey, TData> }
+}
+
+export type ListSessionsQueryResult = NonNullable<Awaited<ReturnType<typeof listSessions>>>
+export type ListSessionsQueryError = unknown
+
+
+export function useListSessions<TData = Awaited<ReturnType<typeof listSessions>>, TError = unknown>(
+ id: number, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listSessions>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useListSessions<TData = Awaited<ReturnType<typeof listSessions>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listSessions>>,
+          TError,
+          Awaited<ReturnType<typeof listSessions>>
+        > , 'initialData'
+      >, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+export function useListSessions<TData = Awaited<ReturnType<typeof listSessions>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>>, }
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> }
+
+export function useListSessions<TData = Awaited<ReturnType<typeof listSessions>>, TError = unknown>(
+ id: number, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listSessions>>, TError, TData>>, }
+ , queryClient?: QueryClient 
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> } {
+
+  const queryOptions = getListSessionsQueryOptions(id,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData> };
+
+  query.queryKey = queryOptions.queryKey ;
+
+  return query;
+}
+
+
+
+
+export const createSession = (
+    id: number,
+    createCircuitSessionRequest: CreateCircuitSessionRequest,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CircuitSessionResponse>(
+      {url: `/api/circuits/${id}/sessions`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: createCircuitSessionRequest, signal
+    },
+      );
+    }
+  
+
+
+export const getCreateSessionMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSession>>, TError,{id: number;data: CreateCircuitSessionRequest}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof createSession>>, TError,{id: number;data: CreateCircuitSessionRequest}, TContext> => {
+
+const mutationKey = ['createSession'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof createSession>>, {id: number;data: CreateCircuitSessionRequest}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  createSession(id,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type CreateSessionMutationResult = NonNullable<Awaited<ReturnType<typeof createSession>>>
+    export type CreateSessionMutationBody = CreateCircuitSessionRequest
+    export type CreateSessionMutationError = unknown
+
+    export const useCreateSession = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof createSession>>, TError,{id: number;data: CreateCircuitSessionRequest}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof createSession>>,
+        TError,
+        {id: number;data: CreateCircuitSessionRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getCreateSessionMutationOptions(options);
+
+      return useMutation(mutationOptions, queryClient);
+    }
+    export const aiSuggestPlaces = (
+    id: number,
+    aiSuggestPlacesRequest: AiSuggestPlacesRequest,
+ signal?: AbortSignal
+) => {
+      
+      
+      return customInstance<CircuitResponse>(
+      {url: `/api/circuits/${id}/ai-suggest-places`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: aiSuggestPlacesRequest, signal
+    },
+      );
+    }
+  
+
+
+export const getAiSuggestPlacesMutationOptions = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof aiSuggestPlaces>>, TError,{id: number;data: AiSuggestPlacesRequest}, TContext>, }
+): UseMutationOptions<Awaited<ReturnType<typeof aiSuggestPlaces>>, TError,{id: number;data: AiSuggestPlacesRequest}, TContext> => {
+
+const mutationKey = ['aiSuggestPlaces'];
+const {mutation: mutationOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }};
+
+      
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof aiSuggestPlaces>>, {id: number;data: AiSuggestPlacesRequest}> = (props) => {
+          const {id,data} = props ?? {};
+
+          return  aiSuggestPlaces(id,data,)
+        }
+
+        
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type AiSuggestPlacesMutationResult = NonNullable<Awaited<ReturnType<typeof aiSuggestPlaces>>>
+    export type AiSuggestPlacesMutationBody = AiSuggestPlacesRequest
+    export type AiSuggestPlacesMutationError = unknown
+
+    export const useAiSuggestPlaces = <TError = unknown,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof aiSuggestPlaces>>, TError,{id: number;data: AiSuggestPlacesRequest}, TContext>, }
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof aiSuggestPlaces>>,
+        TError,
+        {id: number;data: AiSuggestPlacesRequest},
+        TContext
+      > => {
+
+      const mutationOptions = getAiSuggestPlacesMutationOptions(options);
 
       return useMutation(mutationOptions, queryClient);
     }

@@ -1,5 +1,7 @@
 package com.tarikma.app.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.tarikma.app.dto.circuit.*;
 import com.tarikma.app.entity.*;
 import com.tarikma.app.exception.BadRequestException;
@@ -32,6 +34,7 @@ public class CircuitService {
     private final UserRepository userRepository;
     private final AiService aiService;
     private final WeatherService weatherService;
+    private final CircuitSessionRepository circuitSessionRepository;
 
     public CircuitService(
             CircuitRepository circuitRepository,
@@ -42,7 +45,8 @@ public class CircuitService {
             PlaceRepository placeRepository,
             UserRepository userRepository,
             AiService aiService,
-            WeatherService weatherService
+            WeatherService weatherService,
+            CircuitSessionRepository circuitSessionRepository
     ) {
         this.circuitRepository = circuitRepository;
         this.circuitStopRepository = circuitStopRepository;
@@ -53,6 +57,7 @@ public class CircuitService {
         this.userRepository = userRepository;
         this.aiService = aiService;
         this.weatherService = weatherService;
+        this.circuitSessionRepository = circuitSessionRepository;
     }
 
     @Transactional(readOnly = true)
@@ -207,6 +212,7 @@ public class CircuitService {
         circuit.setCity(city);
         circuit.setName(req.getName().trim());
         circuit.setNotes(req.getNotes());
+        circuit.setPriceMad(req.getPriceMad());
         circuit.setCreatedBy(user);
 
         circuit = circuitRepository.save(circuit);
@@ -225,6 +231,9 @@ public class CircuitService {
         }
         if (req.getNotes() != null) {
             circuit.setNotes(req.getNotes());
+        }
+        if (req.getPriceMad() != null) {
+            circuit.setPriceMad(req.getPriceMad());
         }
 
         circuit = circuitRepository.save(circuit);
@@ -582,20 +591,28 @@ public class CircuitService {
                 placesJson
         );
 
+        String aiResponse = null;
         try {
-            String aiResponse = aiService.chatCompletion(systemPrompt, userPrompt);
+            aiResponse = aiService.chatCompletion(systemPrompt, userPrompt);
             log.info("AI generate circuit response: {}", aiResponse);
 
             // Extract JSON
-            String jsonContent = aiResponse.trim();
+            String jsonContent = aiResponse
+                    .replace("```json", "")
+                    .replace("```", "")
+                    .trim();
             int braceStart = jsonContent.indexOf('{');
             int braceEnd = jsonContent.lastIndexOf('}');
             if (braceStart >= 0 && braceEnd > braceStart) {
                 jsonContent = jsonContent.substring(braceStart, braceEnd + 1);
             }
 
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode root = objectMapper.readTree(jsonContent);
+
             // Parse circuit name
-            String circuitName = extractJsonStringField(jsonContent, "circuit_name");
+            JsonNode circuitNameNode = root.get("circuit_name");
+            String circuitName = circuitNameNode != null ? circuitNameNode.asText() : null;
             if (circuitName == null || circuitName.isBlank()) {
                 circuitName = cityName + " " + numberOfDays + "-day circuit";
             }
@@ -609,30 +626,21 @@ public class CircuitService {
             circuit = circuitRepository.save(circuit);
 
             // Parse stops array
-            int stopsArrayStart = jsonContent.indexOf("[", jsonContent.indexOf("\"stops\""));
-            int stopsArrayEnd = findMatchingBracket(jsonContent, stopsArrayStart);
-            if (stopsArrayStart < 0 || stopsArrayEnd < 0) {
+            JsonNode stopsNode = root.get("stops");
+            if (stopsNode == null || !stopsNode.isArray()) {
                 throw new BadRequestException("AI response missing stops array");
             }
 
-            String stopsArrayContent = jsonContent.substring(stopsArrayStart + 1, stopsArrayEnd);
             List<CircuitStop> createdStops = new ArrayList<>();
 
-            // Parse each stop object
-            int objStart = stopsArrayContent.indexOf('{');
-            while (objStart >= 0) {
-                int objEnd = stopsArrayContent.indexOf('}', objStart);
-                if (objEnd < 0) break;
-
-                String stopObj = stopsArrayContent.substring(objStart, objEnd + 1);
-
-                Long placeId = extractJsonLongField(stopObj, "place_id");
-                Integer dayNumber = extractJsonIntField(stopObj, "day_number");
-                Integer position = extractJsonIntField(stopObj, "position");
-                String stopKind = extractJsonStringField(stopObj, "stop_kind");
-                String mealType = extractJsonStringField(stopObj, "meal_type");
-                Integer durationMinutes = extractJsonIntField(stopObj, "duration_minutes");
-                String startTimeStr = extractJsonStringField(stopObj, "start_time");
+            for (JsonNode stopNode : stopsNode) {
+                Long placeId = stopNode.hasNonNull("place_id") ? stopNode.get("place_id").asLong() : null;
+                Integer dayNumber = stopNode.hasNonNull("day_number") ? stopNode.get("day_number").asInt() : null;
+                Integer position = stopNode.hasNonNull("position") ? stopNode.get("position").asInt() : null;
+                String stopKind = stopNode.hasNonNull("stop_kind") ? stopNode.get("stop_kind").asText() : null;
+                String mealType = stopNode.hasNonNull("meal_type") ? stopNode.get("meal_type").asText() : null;
+                Integer durationMinutes = stopNode.hasNonNull("duration_minutes") ? stopNode.get("duration_minutes").asInt() : null;
+                String startTimeStr = stopNode.hasNonNull("start_time") ? stopNode.get("start_time").asText() : null;
 
                 if (placeId != null && position != null) {
                     // Validate place exists and belongs to city
@@ -662,8 +670,6 @@ public class CircuitService {
                         createdStops.add(stop);
                     }
                 }
-
-                objStart = stopsArrayContent.indexOf('{', objEnd);
             }
 
             if (createdStops.isEmpty()) {
@@ -677,64 +683,155 @@ public class CircuitService {
         } catch (BadRequestException e) {
             throw e;
         } catch (Exception e) {
+            if (aiResponse != null) {
+                log.error("AI circuit generation failed. Raw AI response: {}", aiResponse);
+            }
             log.error("AI circuit generation failed", e);
             throw new BadRequestException("AI circuit generation failed: " + e.getMessage());
         }
     }
 
-    private static String extractJsonStringField(String json, String fieldName) {
-        String key = "\"" + fieldName + "\"";
-        int idx = json.indexOf(key);
-        if (idx < 0) return null;
-        int colonIdx = json.indexOf(':', idx + key.length());
-        if (colonIdx < 0) return null;
-        int afterColon = colonIdx + 1;
-        while (afterColon < json.length() && json.charAt(afterColon) == ' ') afterColon++;
-        if (afterColon >= json.length()) return null;
-        if (json.substring(afterColon).startsWith("null")) return null;
-        if (json.charAt(afterColon) == '"') {
-            int endQuote = json.indexOf('"', afterColon + 1);
-            if (endQuote < 0) return null;
-            return json.substring(afterColon + 1, endQuote);
-        }
-        return null;
-    }
+    @Transactional
+    public CircuitResponse suggestPlacesWithAi(Long circuitId, AiSuggestPlacesRequest req, String userEmail) {
+        User user = findUserByEmailOrThrow(userEmail);
+        Circuit circuit = findOwnedCircuitOrThrow(circuitId, user.getId());
 
-    private static Long extractJsonLongField(String json, String fieldName) {
-        String key = "\"" + fieldName + "\"";
-        int idx = json.indexOf(key);
-        if (idx < 0) return null;
-        int colonIdx = json.indexOf(':', idx + key.length());
-        if (colonIdx < 0) return null;
-        int start = colonIdx + 1;
-        while (start < json.length() && json.charAt(start) == ' ') start++;
-        int end = start;
-        while (end < json.length() && (Character.isDigit(json.charAt(end)) || json.charAt(end) == '-')) end++;
-        if (end == start) return null;
+        if (!aiService.isConfigured()) {
+            throw new BadRequestException("AI service is not configured");
+        }
+
+        City city = circuit.getCity();
+        String cityName = getPrimaryCityName(city);
+        int count = req.getCount() != null ? req.getCount() : 5;
+        String preferences = req.getPreferences();
+
+        List<Place> existingPlaces = placeRepository.findByCityId(city.getId());
+        List<CircuitStop> existingStops = circuitStopRepository.findByCircuitIdOrderByPositionAsc(circuitId);
+
+        StringBuilder existingJson = new StringBuilder("[\n");
+        for (int i = 0; i < existingPlaces.size(); i++) {
+            Place p = existingPlaces.get(i);
+            if (i > 0) existingJson.append(",\n");
+            existingJson.append(String.format(
+                    "  {\"id\": %d, \"name\": \"%s\", \"category\": \"%s\"}",
+                    p.getId(),
+                    p.getName().replace("\"", "\\\""),
+                    p.getCategory() != null ? p.getCategory() : ""
+            ));
+        }
+        existingJson.append("\n]");
+
+        StringBuilder currentStopsJson = new StringBuilder("[\n");
+        for (int i = 0; i < existingStops.size(); i++) {
+            CircuitStop s = existingStops.get(i);
+            if (i > 0) currentStopsJson.append(",\n");
+            currentStopsJson.append(String.format(
+                    "  {\"name\": \"%s\", \"category\": \"%s\"}",
+                    s.getPlace().getName().replace("\"", "\\\""),
+                    s.getPlace().getCategory() != null ? s.getPlace().getCategory() : ""
+            ));
+        }
+        currentStopsJson.append("\n]");
+
+        String systemPrompt = "You are a Moroccan travel expert. " +
+                "Given a city in Morocco, suggest NEW real places that tourists should visit. " +
+                "These must be real, existing places with accurate GPS coordinates. " +
+                "Do NOT suggest places that already exist in the provided lists. " +
+                "For each place, provide: name, category (one of: RESTAURANT, CAFE, HOTEL, MUSEUM, MOSQUE, PARK, BEACH, MARKET, MONUMENT, HISTORIC, LANDMARK, NATURE), " +
+                "a short description, address, and accurate latitude/longitude coordinates. " +
+                "Respond ONLY with valid JSON in this exact format:\n" +
+                "{\"places\": [\n" +
+                "  {\"name\": \"Place Name\", \"category\": \"RESTAURANT\", \"description\": \"Short description\", \"address\": \"Street address\", \"latitude\": 35.785, \"longitude\": -5.813}\n" +
+                "]}";
+
+        String userPrompt = String.format(
+                "Suggest %d new places to visit in %s, Morocco.\n" +
+                "%s" +
+                "Already existing places (do NOT repeat these):\n%s\n" +
+                "Current circuit stops (suggest complementary places):\n%s",
+                count,
+                cityName != null ? cityName : "the city",
+                preferences != null && !preferences.isBlank() ? "Preferences: " + preferences + "\n" : "",
+                existingJson,
+                currentStopsJson
+        );
+
+        String aiResponse = null;
         try {
-            return Long.parseLong(json.substring(start, end));
-        } catch (NumberFormatException e) {
-            return null;
-        }
-    }
+            aiResponse = aiService.chatCompletion(systemPrompt, userPrompt);
+            log.info("AI suggest places response for circuit {}: {}", circuitId, aiResponse);
 
-    private static Integer extractJsonIntField(String json, String fieldName) {
-        Long val = extractJsonLongField(json, fieldName);
-        return val != null ? val.intValue() : null;
-    }
-
-    private static int findMatchingBracket(String json, int openBracket) {
-        if (openBracket < 0) return -1;
-        int depth = 0;
-        for (int i = openBracket; i < json.length(); i++) {
-            char c = json.charAt(i);
-            if (c == '[') depth++;
-            else if (c == ']') {
-                depth--;
-                if (depth == 0) return i;
+            String jsonContent = aiResponse
+                    .replace("```json", "")
+                    .replace("```", "")
+                    .trim();
+            int braceStart = jsonContent.indexOf('{');
+            int braceEnd = jsonContent.lastIndexOf('}');
+            if (braceStart >= 0 && braceEnd > braceStart) {
+                jsonContent = jsonContent.substring(braceStart, braceEnd + 1);
             }
+
+            ObjectMapper objectMapper = new ObjectMapper();
+            JsonNode root = objectMapper.readTree(jsonContent);
+            JsonNode placesNode = root.get("places");
+
+            if (placesNode == null || !placesNode.isArray()) {
+                throw new BadRequestException("AI response missing places array");
+            }
+
+            int lastPos = circuitStopRepository.findTopByCircuitIdOrderByPositionDesc(circuitId)
+                    .map(CircuitStop::getPosition)
+                    .orElse(0);
+
+            List<CircuitStop> newStops = new ArrayList<>();
+
+            for (JsonNode placeNode : placesNode) {
+                String name = placeNode.hasNonNull("name") ? placeNode.get("name").asText() : null;
+                String category = placeNode.hasNonNull("category") ? placeNode.get("category").asText() : null;
+                String description = placeNode.hasNonNull("description") ? placeNode.get("description").asText() : null;
+                String address = placeNode.hasNonNull("address") ? placeNode.get("address").asText() : null;
+                Double latitude = placeNode.hasNonNull("latitude") ? placeNode.get("latitude").asDouble() : null;
+                Double longitude = placeNode.hasNonNull("longitude") ? placeNode.get("longitude").asDouble() : null;
+
+                if (name == null || name.isBlank() || latitude == null || longitude == null) {
+                    continue;
+                }
+
+                Place place = new Place();
+                place.setCity(city);
+                place.setName(name.trim());
+                place.setCategory(category);
+                place.setDescription(description);
+                place.setAddress(address);
+                place.setLatitude(latitude);
+                place.setLongitude(longitude);
+                place.setCreatedBy(user);
+                place = placeRepository.save(place);
+
+                lastPos++;
+                CircuitStop stop = new CircuitStop();
+                stop.setCircuit(circuit);
+                stop.setPlace(place);
+                stop.setPosition(lastPos);
+                stop.setStopKind("VISIT");
+                newStops.add(stop);
+            }
+
+            if (newStops.isEmpty()) {
+                throw new BadRequestException("AI failed to suggest valid places");
+            }
+
+            circuitStopRepository.saveAll(newStops);
+            return getMyCircuit(circuitId, userEmail);
+        } catch (BadRequestException e) {
+            throw e;
+        } catch (Exception e) {
+            if (aiResponse != null) {
+                log.error("AI suggest places failed. Raw AI response: {}", aiResponse);
+            }
+            log.error("AI suggest places failed for circuit {}", circuitId, e);
+            throw new BadRequestException("AI suggest places failed: " + e.getMessage());
         }
-        return -1;
     }
 
     private List<Long> parseOrderedIds(String json) {
@@ -830,6 +927,102 @@ public class CircuitService {
         circuitStopRepository.saveAll(allStops);
     }
 
+    // ── Circuit Sessions ──────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public List<CircuitSessionResponse> listSessions(Long circuitId, String userEmail) {
+        User user = findUserByEmailOrThrow(userEmail);
+        findOwnedCircuitOrThrow(circuitId, user.getId());
+
+        return circuitSessionRepository.findByCircuitIdOrderByStartDateTimeAsc(circuitId)
+                .stream()
+                .map(this::toSessionResponse)
+                .toList();
+    }
+
+    @Transactional
+    public CircuitSessionResponse createSession(Long circuitId, CreateCircuitSessionRequest req, String userEmail) {
+        User user = findUserByEmailOrThrow(userEmail);
+        Circuit circuit = findOwnedCircuitOrThrow(circuitId, user.getId());
+
+        if (req.getEndDateTime() != null && !req.getEndDateTime().isAfter(req.getStartDateTime())) {
+            throw new BadRequestException("End date/time must be after start date/time");
+        }
+
+        CircuitSession session = new CircuitSession();
+        session.setCircuit(circuit);
+        session.setStartDateTime(req.getStartDateTime());
+        session.setEndDateTime(req.getEndDateTime());
+        session.setMaxParticipants(req.getMaxParticipants());
+        session.setNotes(req.getNotes());
+
+        return toSessionResponse(circuitSessionRepository.save(session));
+    }
+
+    @Transactional
+    public CircuitSessionResponse updateSession(Long circuitId, Long sessionId, UpdateCircuitSessionRequest req, String userEmail) {
+        User user = findUserByEmailOrThrow(userEmail);
+        findOwnedCircuitOrThrow(circuitId, user.getId());
+
+        CircuitSession session = circuitSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("Session not found"));
+        if (!session.getCircuit().getId().equals(circuitId)) {
+            throw new BadRequestException("Session does not belong to this circuit");
+        }
+
+        if (req.getStartDateTime() != null) {
+            session.setStartDateTime(req.getStartDateTime());
+        }
+        if (req.getEndDateTime() != null) {
+            if (!req.getEndDateTime().isAfter(session.getStartDateTime())) {
+                throw new BadRequestException("End date/time must be after start date/time");
+            }
+            session.setEndDateTime(req.getEndDateTime());
+        }
+        if (req.getMaxParticipants() != null) {
+            session.setMaxParticipants(req.getMaxParticipants());
+        }
+        if (req.getNotes() != null) {
+            session.setNotes(req.getNotes());
+        }
+        if (req.getStatus() != null) {
+            String status = req.getStatus().trim().toUpperCase();
+            if (!status.equals("SCHEDULED") && !status.equals("CANCELLED") && !status.equals("COMPLETED") && !status.equals("IN_PROGRESS")) {
+                throw new BadRequestException("Invalid status. Must be one of: SCHEDULED, CANCELLED, COMPLETED, IN_PROGRESS");
+            }
+            session.setStatus(status);
+        }
+
+        return toSessionResponse(circuitSessionRepository.save(session));
+    }
+
+    @Transactional
+    public void deleteSession(Long circuitId, Long sessionId, String userEmail) {
+        User user = findUserByEmailOrThrow(userEmail);
+        findOwnedCircuitOrThrow(circuitId, user.getId());
+
+        CircuitSession session = circuitSessionRepository.findById(sessionId)
+                .orElseThrow(() -> new NotFoundException("Session not found"));
+        if (!session.getCircuit().getId().equals(circuitId)) {
+            throw new BadRequestException("Session does not belong to this circuit");
+        }
+
+        circuitSessionRepository.delete(session);
+    }
+
+    private CircuitSessionResponse toSessionResponse(CircuitSession s) {
+        CircuitSessionResponse r = new CircuitSessionResponse();
+        r.setId(s.getId());
+        r.setCircuitId(s.getCircuit().getId());
+        r.setStartDateTime(s.getStartDateTime());
+        r.setEndDateTime(s.getEndDateTime());
+        r.setMaxParticipants(s.getMaxParticipants());
+        r.setNotes(s.getNotes());
+        r.setStatus(s.getStatus());
+        r.setCreatedAt(s.getCreatedAt());
+        return r;
+    }
+
     private CircuitSummaryResponse toCircuitSummaryResponse(Circuit c, long stopCount) {
         CircuitSummaryResponse r = new CircuitSummaryResponse();
         r.setId(c.getId());
@@ -837,6 +1030,7 @@ public class CircuitService {
         r.setCityName(getPrimaryCityName(c.getCity()));
         r.setName(c.getName());
         r.setNotes(c.getNotes());
+        r.setPriceMad(c.getPriceMad());
         r.setCreatedAt(c.getCreatedAt());
         r.setStopCount(stopCount);
         return r;
@@ -849,6 +1043,7 @@ public class CircuitService {
         r.setCityName(getPrimaryCityName(c.getCity()));
         r.setName(c.getName());
         r.setNotes(c.getNotes());
+        r.setPriceMad(c.getPriceMad());
         r.setCreatedAt(c.getCreatedAt());
         r.setCreatedBy(c.getCreatedBy().getId());
         return r;

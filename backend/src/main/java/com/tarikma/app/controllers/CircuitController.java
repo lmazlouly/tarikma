@@ -122,4 +122,52 @@ public class CircuitController {
     ) {
         return ResponseEntity.ok(circuitService.reorderStopsWithAi(id, jwt.getSubject()));
     }
+
+    @PostMapping("/{id}/ai-suggest-places")
+    public ResponseEntity<CircuitResponse> aiSuggestPlaces(
+            @PathVariable Long id,
+            @Valid @RequestBody AiSuggestPlacesRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(circuitService.suggestPlacesWithAi(id, request, jwt.getSubject()));
+    }
+
+    // ── Sessions ─────────────────────────────────────────────
+
+    @GetMapping("/{id}/sessions")
+    public ResponseEntity<List<CircuitSessionResponse>> listSessions(
+            @PathVariable Long id,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(circuitService.listSessions(id, jwt.getSubject()));
+    }
+
+    @PostMapping("/{id}/sessions")
+    public ResponseEntity<CircuitSessionResponse> createSession(
+            @PathVariable Long id,
+            @Valid @RequestBody CreateCircuitSessionRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(circuitService.createSession(id, request, jwt.getSubject()));
+    }
+
+    @PutMapping("/{id}/sessions/{sessionId}")
+    public ResponseEntity<CircuitSessionResponse> updateSession(
+            @PathVariable Long id,
+            @PathVariable Long sessionId,
+            @Valid @RequestBody UpdateCircuitSessionRequest request,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        return ResponseEntity.ok(circuitService.updateSession(id, sessionId, request, jwt.getSubject()));
+    }
+
+    @DeleteMapping("/{id}/sessions/{sessionId}")
+    public ResponseEntity<Void> deleteSession(
+            @PathVariable Long id,
+            @PathVariable Long sessionId,
+            @AuthenticationPrincipal Jwt jwt
+    ) {
+        circuitService.deleteSession(id, sessionId, jwt.getSubject());
+        return ResponseEntity.noContent().build();
+    }
 }

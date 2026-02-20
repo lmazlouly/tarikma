@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo, useState, useEffect } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { Icon } from '@iconify/react'
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useListCities1 } from '../../shared/api/city-controller/city-controller'
@@ -24,12 +24,21 @@ export function CircuitsPage() {
   const queryClient = useQueryClient()
   const cities = useListCities1()
   const { keys } = useIgnoredWarningKeys()
+  const [searchParams] = useSearchParams()
 
   const [filterCityId, setFilterCityId] = useState<number | null>(null)
   const [newCircuitCityId, setNewCircuitCityId] = useState<number | null>(null)
   const [name, setName] = useState('')
+  const [price, setPrice] = useState('')
   const [isFormExpanded, setIsFormExpanded] = useState(false)
   const [showAiWizard, setShowAiWizard] = useState(false)
+
+  // Check for AI parameter and open wizard
+  useEffect(() => {
+    if (searchParams.get('ai') === 'true') {
+      setShowAiWizard(true)
+    }
+  }, [searchParams])
 
   const circuitsQuery = useQuery({
     queryKey: ['my-circuits', filterCityId],
@@ -47,10 +56,11 @@ export function CircuitsPage() {
   })
 
   const createMutation = useMutation({
-    mutationFn: ({ cityId, name }: { cityId: number; name: string }) =>
-      createCircuit({ cityId, name, notes: null }),
+    mutationFn: ({ cityId, name, priceMad }: { cityId: number; name: string; priceMad: number | null }) =>
+      createCircuit({ cityId, name, notes: null, priceMad }),
     onSuccess: async () => {
       setName('')
+      setPrice('')
       setNewCircuitCityId(null)
       setIsFormExpanded(false)
       await queryClient.invalidateQueries({ queryKey: ['my-circuits'] })
@@ -66,7 +76,8 @@ export function CircuitsPage() {
     if (!newCircuitCityId) return
     const trimmed = name.trim()
     if (!trimmed) return
-    createMutation.mutate({ cityId: newCircuitCityId, name: trimmed })
+    const priceMad = price.trim() ? parseFloat(price.trim()) : null
+    createMutation.mutate({ cityId: newCircuitCityId, name: trimmed, priceMad })
   }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -154,6 +165,22 @@ export function CircuitsPage() {
                   autoComplete="off"
                 />
               </div>
+
+              <div className="form-field">
+                <label className="field-label" htmlFor="plan-price">Price (MAD)</label>
+                <input
+                  id="plan-price"
+                  className="field-input"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  placeholder="Optional"
+                  autoComplete="off"
+                />
+              </div>
             </div>
 
             {createMutation.isError && (
@@ -170,6 +197,7 @@ export function CircuitsPage() {
                 onClick={() => {
                   setIsFormExpanded(false)
                   setName('')
+                  setPrice('')
                   setNewCircuitCityId(null)
                 }}
               >
@@ -298,6 +326,9 @@ export function CircuitsPage() {
                       <div className="circuit-info">
                         <div className="circuit-name-row">
                           <span className="circuit-name">{c.name}</span>
+                          {c.priceMad != null && (
+                            <span className="circuit-price">{c.priceMad} MAD</span>
+                          )}
                           <PlanningWarningsBadge count={visibleCount} />
                         </div>
                         <span className="circuit-city">
@@ -752,6 +783,17 @@ export function CircuitsPage() {
           color: var(--text-secondary);
         }
         .circuit-city svg { font-size: 13px; }
+        .circuit-price {
+          display: inline-flex;
+          align-items: center;
+          padding: 1px 8px;
+          border-radius: 20px;
+          background: #FDF8EC;
+          color: #92700A;
+          font-size: 11px;
+          font-weight: 600;
+          white-space: nowrap;
+        }
         .circuit-arrow { font-size: 18px; color: var(--text-muted); flex-shrink: 0; }
 
         /* ── AI Plan button ── */
