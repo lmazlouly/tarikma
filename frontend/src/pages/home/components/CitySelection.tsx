@@ -16,17 +16,17 @@ const cities: CityCard[] = [
   {
     name: 'Chefchaouen',
     tagline: 'The Blue Pearl of the Rif Mountains',
-    image: 'https://images.unsplash.com/photo-1553244552-4bef5a13f518?w=600&h=400&fit=crop',
+    image: 'https://i.pinimg.com/originals/c3/53/65/c35365a853ead78c1ca4c5721be7599f.jpg',
   },
   {
     name: 'Fes',
     tagline: 'The spiritual & cultural heart of Morocco',
-    image: 'https://images.unsplash.com/photo-1579169326371-bfc91407bf33?w=600&h=400&fit=crop',
+    image: 'https://tse2.mm.bing.net/th/id/OIP.aB5fcs0philVP2dVxhC6fwHaEz?rs=1&pid=ImgDetMain&o=7&rm=3',
   },
   {
     name: 'Tangier',
     tagline: 'Where the Atlantic meets the Mediterranean',
-    image: 'https://images.unsplash.com/photo-1569383746724-6f1b882b8f46?w=600&h=400&fit=crop',
+    image: 'https://tse1.mm.bing.net/th/id/OIP.dCcYr1jPM0SB6T2iqxQ-MwHaE8?rs=1&pid=ImgDetMain&o=7&rm=3',
   },
 ]
 
