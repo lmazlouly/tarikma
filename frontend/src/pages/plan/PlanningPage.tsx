@@ -84,7 +84,8 @@ export function PlanningPage() {
   const markersRef = useRef<maplibregl.Marker[]>([])
 
   const queryClient = useQueryClient()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, roles } = useAuth()
+  const isGuideOnly = roles.length === 1 && roles[0] === 'GUIDE'
   const cities = useListCities1()
   const [searchParams] = useSearchParams()
 
@@ -667,80 +668,82 @@ export function PlanningPage() {
                 ))}
               </div>
 
-              <div className="px-4 pt-4">
-                <div className="card p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="text-sm font-semibold text-gray-700">Plan</div>
-                    <Link
-                      to="/plan/circuits"
-                      className="text-xs text-brand-ocean hover:text-brand-ocean-hover no-underline"
-                    >
-                      Manage
-                    </Link>
-                  </div>
-
-                  {!isAuthenticated ? (
-                    <div className="mt-2 text-xs text-gray-500">
-                      <Link to="/login" className="text-brand-ocean hover:text-brand-ocean-hover no-underline">
-                        Login
-                      </Link>{' '}
-                      to start planning and add stops.
+              {!isGuideOnly && (
+                <div className="px-4 pt-4">
+                  <div className="card p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="text-sm font-semibold text-gray-700">Plan</div>
+                      <Link
+                        to="/plan/circuits"
+                        className="text-xs text-brand-ocean hover:text-brand-ocean-hover no-underline"
+                      >
+                        Manage
+                      </Link>
                     </div>
-                  ) : (
-                    <>
-                      <div className="mt-2">
-                        <select
-                          className="input w-full"
-                          value={selectedCircuitId ?? ''}
-                          onChange={(e) => setSelectedCircuitId(e.target.value ? Number(e.target.value) : null)}
-                          disabled={circuitsQuery.isLoading || circuits.length === 0}
-                        >
-                          <option value="">Choose a plan…</option>
-                          {circuits.length === 0 ? (
-                            <option value="">No plans for this city</option>
-                          ) : null}
-                          {circuits.map((c) => (
-                            <option key={c.id} value={c.id}>
-                              {c.name} ({c.stopCount ?? 0})
-                            </option>
-                          ))}
-                        </select>
+
+                    {!isAuthenticated ? (
+                      <div className="mt-2 text-xs text-gray-500">
+                        <Link to="/login" className="text-brand-ocean hover:text-brand-ocean-hover no-underline">
+                          Login
+                        </Link>{' '}
+                        to start planning and add stops.
                       </div>
-
-                      {!selectedCircuitId ? (
-                        <div className="mt-2 text-xs text-gray-500">Select a plan to see your route on the map.</div>
-                      ) : null}
-
-                      {selectedCircuitId ? (
+                    ) : (
+                      <>
                         <div className="mt-2">
-                          <Link
-                            to={`/plan/circuits/${selectedCircuitId}`}
-                            className="text-xs text-brand-ocean hover:text-brand-ocean-hover no-underline"
+                          <select
+                            className="input w-full"
+                            value={selectedCircuitId ?? ''}
+                            onChange={(e) => setSelectedCircuitId(e.target.value ? Number(e.target.value) : null)}
+                            disabled={circuitsQuery.isLoading || circuits.length === 0}
                           >
-                            Open plan
-                          </Link>
+                            <option value="">Choose a plan…</option>
+                            {circuits.length === 0 ? (
+                              <option value="">No plans for this city</option>
+                            ) : null}
+                            {circuits.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.name} ({c.stopCount ?? 0})
+                              </option>
+                            ))}
+                          </select>
                         </div>
-                      ) : null}
 
-                      {circuitsQuery.isError ? (
-                        <div className="mt-2 text-xs text-red-600">Failed to load plans.</div>
-                      ) : null}
-                      {circuits.length === 0 ? (
-                        <div className="mt-2 text-xs text-gray-500">
-                          Create a plan first in{' '}
-                          <Link
-                            to="/plan/circuits"
-                            className="text-brand-ocean hover:text-brand-ocean-hover no-underline"
-                          >
-                            Plans
-                          </Link>
-                          .
-                        </div>
-                      ) : null}
-                    </>
-                  )}
+                        {!selectedCircuitId ? (
+                          <div className="mt-2 text-xs text-gray-500">Select a plan to see your route on the map.</div>
+                        ) : null}
+
+                        {selectedCircuitId ? (
+                          <div className="mt-2">
+                            <Link
+                              to={`/plan/circuits/${selectedCircuitId}`}
+                              className="text-xs text-brand-ocean hover:text-brand-ocean-hover no-underline"
+                            >
+                              Open plan
+                            </Link>
+                          </div>
+                        ) : null}
+
+                        {circuitsQuery.isError ? (
+                          <div className="mt-2 text-xs text-red-600">Failed to load plans.</div>
+                        ) : null}
+                        {circuits.length === 0 ? (
+                          <div className="mt-2 text-xs text-gray-500">
+                            Create a plan first in{' '}
+                            <Link
+                              to="/plan/circuits"
+                              className="text-brand-ocean hover:text-brand-ocean-hover no-underline"
+                            >
+                              Plans
+                            </Link>
+                            .
+                          </div>
+                        ) : null}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Places */}
               <div className="px-4 pt-4">
@@ -802,7 +805,7 @@ export function PlanningPage() {
                           <div className="text-[11px] text-gray-400 truncate">{place.address}</div>
                         )}
                       </div>
-                      {isAuthenticated && selectedCircuitId && place.id ? (
+                      {isAuthenticated && !isGuideOnly && selectedCircuitId && place.id ? (
                         addedPlaceIds.has(place.id) ? (
                           <span className="flex items-center gap-1 rounded-full bg-green-50 px-2.5 py-1 text-xs font-medium text-green-600">
                             <Icon icon="mdi:check" className="text-sm" />

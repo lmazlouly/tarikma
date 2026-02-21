@@ -158,6 +158,37 @@ const router = createBrowserRouter([
     ],
   },
   {
+    path: '/guide',
+    element: (
+      <ProtectedRoute requireRole="GUIDE">
+        <DashboardLayout />
+      </ProtectedRoute>
+    ),
+    children: [
+      {
+        index: true,
+        lazy: async () => {
+          const m = await import('../../pages/guide/GuideOverviewPage')
+          return { Component: m.GuideOverviewPage }
+        },
+      },
+      {
+        path: 'profile',
+        lazy: async () => {
+          const m = await import('../../pages/guide/GuideProfilePage')
+          return { Component: m.GuideProfilePage }
+        },
+      },
+      {
+        path: 'bookings',
+        lazy: async () => {
+          const m = await import('../../pages/guide/GuideBookingsPage')
+          return { Component: m.GuideBookingsPage }
+        },
+      },
+    ],
+  },
+  {
     path: '/admin',
     element: (
       <ProtectedRoute requireRole="ADMIN">

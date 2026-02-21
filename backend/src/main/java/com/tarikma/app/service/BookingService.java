@@ -81,6 +81,12 @@ public class BookingService {
         User user = userRepository.findByEmail(userEmail)
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
+        boolean isGuide = user.getRoles().stream()
+                .anyMatch(r -> "GUIDE".equals(r.getName()));
+        if (isGuide) {
+            throw new BadRequestException("Guides cannot book tours");
+        }
+
         CircuitSession session = circuitSessionRepository.findById(circuitSessionId)
                 .orElseThrow(() -> new NotFoundException("Session not found"));
 

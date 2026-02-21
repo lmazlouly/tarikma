@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
 import { Icon } from '@iconify/react'
 import { useQuery } from '@tanstack/react-query'
 import { useAuth } from '../../app/auth/AuthContext'
@@ -7,6 +7,11 @@ import type { BookingResponse } from '../../shared/api/tours'
 
 export function DashboardPage() {
   const { email, fullName, roles, hasRole } = useAuth()
+  const isGuideOnly = roles.length === 1 && roles[0] === 'GUIDE'
+
+  if (isGuideOnly) {
+    return <Navigate to="/guide" replace />
+  }
 
   const initials = (fullName ?? 'U')
     .split(' ')

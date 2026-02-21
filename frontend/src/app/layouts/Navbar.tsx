@@ -3,7 +3,8 @@ import { Icon } from '@iconify/react'
 import { useAuth } from '../auth/AuthContext'
 
 export function Navbar() {
-  const { isAuthenticated, hasRole, logout } = useAuth()
+  const { isAuthenticated, hasRole, roles, logout } = useAuth()
+  const isGuideOnly = roles.length === 1 && roles[0] === 'GUIDE'
 
   return (
     <>
@@ -20,12 +21,21 @@ export function Navbar() {
             </Link>
             {isAuthenticated ? (
               <>
-                <Link to="/dashboard" className="transition hover:text-gray-900">
-                  Dashboard
-                </Link>
-                <Link to="/plan/circuits" className="transition hover:text-gray-900">
-                  Plans
-                </Link>
+                {!isGuideOnly && (
+                  <Link to="/dashboard" className="transition hover:text-gray-900">
+                    Dashboard
+                  </Link>
+                )}
+                {!isGuideOnly && (
+                  <Link to="/plan/circuits" className="transition hover:text-gray-900">
+                    Plans
+                  </Link>
+                )}
+                {hasRole('GUIDE') && (
+                  <Link to="/guide" className="transition hover:text-gray-900">
+                    Guide
+                  </Link>
+                )}
                 {hasRole('ADMIN') && (
                   <Link to="/admin" className="transition hover:text-gray-900">
                     Admin
@@ -64,10 +74,15 @@ export function Navbar() {
             <span className="text-[10px]">Home</span>
           </Link>
 
-          {isAuthenticated ? (
+          {isAuthenticated && !isGuideOnly ? (
             <Link to="/plan/circuits" className="flex flex-col items-center gap-0.5 text-gray-400 transition hover:text-gray-900">
               <Icon icon="mdi:map-marker-path" className="text-xl" />
               <span className="text-[10px]">Plans</span>
+            </Link>
+          ) : isAuthenticated && isGuideOnly ? (
+            <Link to="/guide" className="flex flex-col items-center gap-0.5 text-gray-400 transition hover:text-gray-900">
+              <Icon icon="mdi:compass-outline" className="text-xl" />
+              <span className="text-[10px]">Guide</span>
             </Link>
           ) : (
             <Link to="/plan" className="flex flex-col items-center gap-0.5 text-gray-400 transition hover:text-gray-900">
@@ -85,9 +100,9 @@ export function Navbar() {
           </Link>
 
           {isAuthenticated ? (
-            <Link to="/dashboard" className="flex flex-col items-center gap-0.5 text-gray-400 transition hover:text-gray-900">
+            <Link to={isGuideOnly ? '/guide' : '/dashboard'} className="flex flex-col items-center gap-0.5 text-gray-400 transition hover:text-gray-900">
               <Icon icon="mdi:view-dashboard-outline" className="text-xl" />
-              <span className="text-[10px]">Dashboard</span>
+              <span className="text-[10px]">{isGuideOnly ? 'Guide' : 'Dashboard'}</span>
             </Link>
           ) : (
             <Link to="/login" className="flex flex-col items-center gap-0.5 text-gray-400 transition hover:text-gray-900">

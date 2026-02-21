@@ -22,8 +22,9 @@ const adminNav: NavItem[] = [
 
 const guideNav: NavItem[] = [
   { label: 'Overview', path: '/guide', icon: 'mdi:view-dashboard-outline' },
-  { label: 'My Profile', path: '/guide/profile', icon: 'mdi:account-outline' },
+  { label: 'My Tours', path: '/plan/circuits', icon: 'mdi:map-marker-path' },
   { label: 'Bookings', path: '/guide/bookings', icon: 'mdi:calendar-check-outline' },
+  { label: 'My Profile', path: '/guide/profile', icon: 'mdi:account-outline' },
 ]
 
 const companyNav: NavItem[] = [

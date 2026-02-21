@@ -84,6 +84,7 @@ public class SecurityConfig {
                                 org.springframework.http.HttpMethod.DELETE,
                                 "/api/transport-options/**"
                         ).hasAnyRole("ADMIN", "GUIDE")
+                        .requestMatchers("/api/guide/**").hasRole("GUIDE")
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )

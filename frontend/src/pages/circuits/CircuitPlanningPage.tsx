@@ -11,6 +11,7 @@ import { addStop, deleteStop, updateStop } from '../../shared/api/circuit-contro
 import type { UpdateCircuitStopRequest } from '../../shared/api/model'
 import { PlanningWarningsPanel } from '../../features/planningWarnings/PlanningWarningsPanel'
 import { ensureRTLPlugin } from '../../shared/mapRtlPlugin'
+import { useAuth } from '../../app/auth/AuthContext'
 
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty'
 
@@ -112,6 +113,9 @@ export function CircuitPlanningPage() {
   const [sessionEndTime, setSessionEndTime] = useState('')
   const [sessionMaxParticipants, setSessionMaxParticipants] = useState('')
   const [sessionNotes, setSessionNotes] = useState('')
+
+  const { roles } = useAuth()
+  const isCustomerOnly = roles.length === 1 && roles[0] === 'CUSTOMER'
 
   const circuitQuery = useQuery({
     queryKey: ['my-circuit', circuitId],
@@ -451,7 +455,7 @@ export function CircuitPlanningPage() {
           {circuit?.cityName && (
             <p className="mt-0.5 text-sm text-gray-500">{circuit.cityName}</p>
           )}
-          {circuit && (
+          {circuit && !isCustomerOnly && (
             <div className="mt-1.5 flex items-center gap-2">
               {editingPrice ? (
                 <form className="flex items-center gap-1.5" onSubmit={(e) => { e.preventDefault(); priceMutation.mutate(parseFloat(priceInput) || 0) }}>
@@ -685,25 +689,27 @@ export function CircuitPlanningPage() {
             )}
           </div>
 
-          {/* Action buttons: AI Suggest + Add Place */}
-          <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setShowAiSuggest(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-ocean to-brand-ocean-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
-            >
-              <Icon icon="mdi:robot-happy" className="text-base" />
-              AI Suggest Places
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowAddPlace(true)}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-brand-ocean hover:text-brand-ocean"
-            >
-              <Icon icon="mdi:map-marker-plus" className="text-base" />
-              Add New Place
-            </button>
-          </div>
+          {/* Action buttons: AI Suggest + Add Place (hidden for customer-only users) */}
+          {!isCustomerOnly && (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setShowAiSuggest(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl bg-gradient-to-r from-brand-ocean to-brand-ocean-light px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:shadow-md"
+              >
+                <Icon icon="mdi:robot-happy" className="text-base" />
+                AI Suggest Places
+              </button>
+              <button
+                type="button"
+                onClick={() => setShowAddPlace(true)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:border-brand-ocean hover:text-brand-ocean"
+              >
+                <Icon icon="mdi:map-marker-plus" className="text-base" />
+                Add New Place
+              </button>
+            </div>
+          )}
 
           {/* Sessions */}
           <div className="card p-5">
@@ -801,7 +807,7 @@ export function CircuitPlanningPage() {
       )}
 
       {/* AI Suggest Places Modal */}
-      {showAiSuggest && (
+      {showAiSuggest && !isCustomerOnly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => !aiSuggestMutation.isPending && setShowAiSuggest(false)}>
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 pt-5 pb-3 flex items-center justify-between">
@@ -871,7 +877,7 @@ export function CircuitPlanningPage() {
       )}
 
       {/* Add New Place Modal */}
-      {showAddPlace && (
+      {showAddPlace && !isCustomerOnly && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4" onClick={() => !addPlaceMutation.isPending && setShowAddPlace(false)}>
           <div className="bg-white rounded-2xl w-full max-w-md shadow-2xl overflow-hidden" onClick={(e) => e.stopPropagation()}>
             <div className="px-6 pt-5 pb-3 flex items-center justify-between">

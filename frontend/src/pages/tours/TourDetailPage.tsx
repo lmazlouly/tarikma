@@ -7,6 +7,7 @@ import maplibregl from 'maplibre-gl'
 import 'maplibre-gl/dist/maplibre-gl.css'
 import { getTourDetail, createCheckout } from '../../shared/api/tours'
 import type { TourSession } from '../../shared/api/tours'
+import { useAuth } from '../../app/auth/AuthContext'
 
 const MAP_STYLE = 'https://tiles.openfreemap.org/styles/liberty'
 
@@ -22,6 +23,8 @@ export function TourDetailPage() {
   const tourId = Number(id)
   const valid = !isNaN(tourId) && tourId > 0
   const mapContainer = useRef<HTMLDivElement>(null)
+  const { hasRole } = useAuth()
+  const isGuide = hasRole('GUIDE')
 
   const tourQuery = useQuery({
     queryKey: ['tour-detail', tourId],
@@ -264,28 +267,30 @@ export function TourDetailPage() {
                           )}
                         </div>
                       </div>
-                      <button
-                        type="button"
-                        disabled={alreadyBooked || isFull || bookMutation.isPending}
-                        onClick={() => bookMutation.mutate(s.id)}
-                        className={`inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-sm transition ${
-                          alreadyBooked
-                            ? 'bg-brand-success/10 text-brand-success border border-brand-success/30 cursor-default'
-                            : isFull
-                              ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                              : 'bg-gradient-to-r from-brand-gold to-brand-gold-hover text-brand-dark hover:shadow-md'
-                        } disabled:opacity-80`}
-                      >
-                        {alreadyBooked ? (
-                          <><Icon icon="mdi:check-circle" /> Already Booked</>
-                        ) : bookMutation.isPending ? (
-                          <><Icon icon="mdi:loading" className="animate-spin" /> Processing…</>
-                        ) : isFull ? (
-                          'Fully Booked'
-                        ) : (
-                          <><Icon icon="mdi:credit-card-outline" /> Book Now</>
-                        )}
-                      </button>
+                      {!isGuide && (
+                        <button
+                          type="button"
+                          disabled={alreadyBooked || isFull || bookMutation.isPending}
+                          onClick={() => bookMutation.mutate(s.id)}
+                          className={`inline-flex items-center gap-1.5 rounded-xl px-5 py-2.5 text-sm font-semibold shadow-sm transition ${
+                            alreadyBooked
+                              ? 'bg-brand-success/10 text-brand-success border border-brand-success/30 cursor-default'
+                              : isFull
+                                ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                : 'bg-gradient-to-r from-brand-gold to-brand-gold-hover text-brand-dark hover:shadow-md'
+                          } disabled:opacity-80`}
+                        >
+                          {alreadyBooked ? (
+                            <><Icon icon="mdi:check-circle" /> Already Booked</>
+                          ) : bookMutation.isPending ? (
+                            <><Icon icon="mdi:loading" className="animate-spin" /> Processing…</>
+                          ) : isFull ? (
+                            'Fully Booked'
+                          ) : (
+                            <><Icon icon="mdi:credit-card-outline" /> Book Now</>
+                          )}
+                        </button>
+                      )}
                     </div>
                   )
                 })}

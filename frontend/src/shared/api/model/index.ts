@@ -36,6 +36,8 @@ export * from './createPlaceRequest';
 export * from './createRoleRequest';
 export * from './createTransportOptionRequest';
 export * from './getByCheckoutIdParams';
+export * from './guideBookingResponse';
+export * from './guideDashboardSummary';
 export * from './health200';
 export * from './listMyCircuitsParams';
 export * from './listParams';

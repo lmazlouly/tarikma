@@ -11,6 +11,7 @@ import {
   type CircuitSummary,
 } from '../../shared/api/circuits'
 import { PlanningWarningsBadge } from '../../features/planningWarnings/PlanningWarningsBadge'
+import { useAuth } from '../../app/auth/AuthContext'
 import { warningKey } from '../../features/planningWarnings/ignoredWarningsStore'
 import { useIgnoredWarningKeys } from '../../features/planningWarnings/useIgnoredWarnings'
 import { AiCircuitWizard } from '../../features/circuits/AiCircuitWizard'
@@ -32,6 +33,9 @@ export function CircuitsPage() {
   const [price, setPrice] = useState('')
   const [isFormExpanded, setIsFormExpanded] = useState(false)
   const [showAiWizard, setShowAiWizard] = useState(false)
+
+  const { roles } = useAuth()
+  const isCustomerOnly = roles.length === 1 && roles[0] === 'CUSTOMER'
 
   // Check for AI parameter and open wizard
   useEffect(() => {
@@ -166,21 +170,23 @@ export function CircuitsPage() {
                 />
               </div>
 
-              <div className="form-field">
-                <label className="field-label" htmlFor="plan-price">Price (MAD)</label>
-                <input
-                  id="plan-price"
-                  className="field-input"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Optional"
-                  autoComplete="off"
-                />
-              </div>
+              {!isCustomerOnly && (
+                <div className="form-field">
+                  <label className="field-label" htmlFor="plan-price">Price (MAD)</label>
+                  <input
+                    id="plan-price"
+                    className="field-input"
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={price}
+                    onChange={(e) => setPrice(e.target.value)}
+                    onKeyDown={handleKeyDown}
+                    placeholder="Optional"
+                    autoComplete="off"
+                  />
+                </div>
+              )}
             </div>
 
             {createMutation.isError && (
@@ -326,7 +332,7 @@ export function CircuitsPage() {
                       <div className="circuit-info">
                         <div className="circuit-name-row">
                           <span className="circuit-name">{c.name}</span>
-                          {c.priceMad != null && (
+                          {!isCustomerOnly && c.priceMad != null && (
                             <span className="circuit-price">{c.priceMad} MAD</span>
                           )}
                           <PlanningWarningsBadge count={visibleCount} />

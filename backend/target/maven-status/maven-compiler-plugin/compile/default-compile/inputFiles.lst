@@ -8,6 +8,7 @@
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/controllers/BookingController.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/controllers/CircuitController.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/controllers/CityController.java
+/Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/controllers/GuideDashboardController.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/controllers/HealthController.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/controllers/StripeWebhookController.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/controllers/TourController.java
@@ -51,6 +52,8 @@
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/dto/city/PlaceResponse.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/dto/city/UpdateCityRequest.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/dto/city/UpdatePlaceRequest.java
+/Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/dto/guide/GuideBookingResponse.java
+/Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/dto/guide/GuideDashboardSummary.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/dto/tour/BookingResponse.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/dto/tour/TourDetailResponse.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/dto/tour/TourSessionResponse.java
@@ -96,6 +99,7 @@
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/service/BookingService.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/service/CircuitService.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/service/CityService.java
+/Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/service/GuideDashboardService.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/service/HealthService.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/service/JwtService.java
 /Users/zaydlouly/Desktop/github/tarikma/backend/src/main/java/com/tarikma/app/service/TourService.java
