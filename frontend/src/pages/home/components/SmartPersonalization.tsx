@@ -1,4 +1,5 @@
 import { motion } from 'framer-motion'
+import { Link } from 'react-router-dom'
 import { Icon } from '@iconify/react'
 
 export function SmartPersonalization() {
@@ -24,10 +25,13 @@ export function SmartPersonalization() {
           powered by smart matching, not brochures.
         </p>
 
-        <button className="mt-8 inline-flex items-center gap-2 rounded-full bg-brand-ocean px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-ocean/25 transition hover:bg-brand-ocean-hover hover:shadow-brand-ocean/40">
+        <Link 
+          to="/plan/circuits?ai=true"
+          className="mt-8 inline-flex items-center gap-2 rounded-full bg-brand-ocean px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-brand-ocean/25 transition hover:bg-brand-ocean-hover hover:shadow-brand-ocean/40 no-underline"
+        >
           <Icon icon="mdi:magic-staff" className="text-lg" />
           Get My Personalized Plan
-        </button>
+        </Link>
       </motion.div>
     </section>
   )

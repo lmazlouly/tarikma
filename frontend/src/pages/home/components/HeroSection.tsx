@@ -46,18 +46,18 @@ export function HeroSection() {
           transition={{ duration: 0.6, delay: 0.3 }}
         >
           <Link
-            to="/plan"
+            to="/plan/circuits"
             className="inline-flex items-center gap-2 rounded-full bg-brand-gold px-8 py-3.5 text-base font-semibold text-brand-dark shadow-lg shadow-brand-gold/25 transition hover:bg-brand-gold-hover hover:shadow-brand-gold/40 no-underline"
           >
             <Icon icon="mdi:rocket-launch-outline" className="text-lg" />
             Start Planning
           </Link>
-          <a
-            href="#companies"
-            className="inline-flex items-center gap-2 rounded-full border border-white/30 px-8 py-3.5 text-base font-medium text-white transition hover:border-white/60 hover:bg-white/10 hover:text-brand-gold"
+          <Link
+            to="/tours"
+            className="inline-flex items-center gap-2 rounded-full border border-white/30 px-8 py-3.5 text-base font-medium text-white transition hover:border-white/60 hover:bg-white/10 hover:text-brand-gold no-underline"
           >
             Browse Ready-Made Tours
-          </a>
+          </Link>
         </motion.div>
       </div>
     </section>

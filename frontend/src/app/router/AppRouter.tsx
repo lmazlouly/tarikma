@@ -65,6 +65,90 @@ const router = createBrowserRouter([
         },
       },
       {
+        path: 'circuits',
+        lazy: async () => {
+          const m = await import('../../pages/circuits/CircuitsPage')
+          const Page = m.CircuitsPage
+          return {
+            Component: () => (
+              <ProtectedRoute>
+                <Page />
+              </ProtectedRoute>
+            ),
+          }
+        },
+      },
+      {
+        path: 'circuits/:id',
+        lazy: async () => {
+          const m = await import('../../pages/circuits/CircuitPlanningPage')
+          const Page = m.CircuitPlanningPage
+          return {
+            Component: () => (
+              <ProtectedRoute>
+                <Page />
+              </ProtectedRoute>
+            ),
+          }
+        },
+      },
+      {
+        path: 'plan/circuits',
+        lazy: async () => {
+          const m = await import('../../pages/circuits/CircuitsPage')
+          const Page = m.CircuitsPage
+          return {
+            Component: () => (
+              <ProtectedRoute>
+                <Page />
+              </ProtectedRoute>
+            ),
+          }
+        },
+      },
+      {
+        path: 'plan/circuits/:id',
+        lazy: async () => {
+          const m = await import('../../pages/circuits/CircuitPlanningPage')
+          const Page = m.CircuitPlanningPage
+          return {
+            Component: () => (
+              <ProtectedRoute>
+                <Page />
+              </ProtectedRoute>
+            ),
+          }
+        },
+      },
+      {
+        path: 'tours',
+        lazy: async () => {
+          const m = await import('../../pages/tours/ToursPage')
+          return { Component: m.ToursPage }
+        },
+      },
+      {
+        path: 'tours/booking-success',
+        lazy: async () => {
+          const m = await import('../../pages/tours/BookingSuccessPage')
+          const Page = m.BookingSuccessPage
+          return {
+            Component: () => (
+              <ProtectedRoute>
+                <Page />
+              </ProtectedRoute>
+            ),
+          }
+        },
+      },
+      {
+        path: 'tours/:id',
+        lazy: async () => {
+          const m = await import('../../pages/tours/TourDetailPage')
+          return { Component: m.TourDetailPage }
+        },
+      },
+      {
         path: '*',
         lazy: async () => {
           const m = await import('../../pages/not-found/NotFoundPage')

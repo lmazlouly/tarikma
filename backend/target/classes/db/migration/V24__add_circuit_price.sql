@@ -1,0 +1,1 @@
+ALTER TABLE circuits ADD COLUMN price_mad NUMERIC(10,2);
